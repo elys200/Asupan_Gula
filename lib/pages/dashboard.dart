@@ -33,12 +33,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
             // Top Greeting
             Stack(
               children: [
-                // Curved red-orange background
                 ClipPath(
                   clipper: BottomCurveClipper(),
                   child: Container(
                     height: 200,
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       gradient: LinearGradient(
                         colors: [Colors.redAccent, Colors.orangeAccent],
                         begin: Alignment.topLeft,
@@ -47,22 +46,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   ),
                 ),
-
-                // Greeting and Avatar
                 Positioned(
                   top: 60,
                   left: 16,
                   right: 16,
                   child: Row(
                     children: [
-                      CircleAvatar(
+                      const CircleAvatar(
                         radius: 30,
                         backgroundImage: AssetImage(
                           'assets/images/portrait.png',
                         ),
                       ),
-                      SizedBox(width: 12),
-                      Text(
+                      const SizedBox(width: 12),
+                      const Text(
                         'Hello,\nElys!',
                         style: TextStyle(
                           color: Colors.white,
@@ -76,7 +73,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ],
             ),
 
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
 
             // Sugar Status Box
             Padding(
@@ -90,29 +87,29 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
                     children: [
-                      Text(
+                      const Text(
                         "Today Sugar",
                         style: TextStyle(fontWeight: FontWeight.bold),
                       ),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
-                          Text('Low'),
+                          const Text('Low'),
                           Container(
                             width: 60,
                             height: 20,
                             color: Colors.grey[300],
                           ),
-                          Text('Normal'),
+                          const Text('Normal'),
                           Container(
                             width: 60,
                             height: 20,
                             color: Colors.grey[300],
                           ),
-                          Text('High'),
+                          const Text('High'),
                         ],
                       ),
-                      SizedBox(height: 10),
+                      const SizedBox(height: 10),
                       ElevatedButton(
                         onPressed: () {},
                         style: ElevatedButton.styleFrom(
@@ -121,7 +118,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             borderRadius: BorderRadius.circular(10),
                           ),
                         ),
-                        child: Text('Start Calculate'),
+                        child: const Text('Start Calculate'),
                       ),
                     ],
                   ),
@@ -129,7 +126,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
 
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
 
             // Food Recommendation Title
             Padding(
@@ -137,7 +134,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
+                  const Text(
                     "Food Recommendation",
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                   ),
@@ -145,7 +142,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     onPressed: () {
                       Navigator.pushNamed(context, '/food');
                     },
-                    child: Text("See all"),
+                    child: const Text("See all"),
                   ),
                 ],
               ),
@@ -176,7 +173,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
 
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
 
             // News Section Title
             Padding(
@@ -184,7 +181,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
+                  const Text(
                     "News",
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                   ),
@@ -192,7 +189,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     onPressed: () {
                       Navigator.pushNamed(context, '/news');
                     },
-                    child: Text("See all"),
+                    child: const Text("See all"),
                   ),
                 ],
               ),
@@ -220,14 +217,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             left: 0,
                             right: 0,
                             child: Container(
-                              padding: EdgeInsets.all(8),
+                              padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
                                 color: Colors.black.withOpacity(0.5),
-                                borderRadius: BorderRadius.vertical(
+                                borderRadius: const BorderRadius.vertical(
                                   bottom: Radius.circular(20),
                                 ),
                               ),
-                              child: Text(
+                              child: const Text(
                                 'Headlines !!',
                                 style: TextStyle(color: Colors.white),
                               ),
@@ -245,20 +242,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ],
         ),
-      ),
-
-      // Bottom Nav
-      bottomNavigationBar: BottomNavigationBar(
-        items: [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard_customize),
-            label: '',
-          ),
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: ''),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: ''),
-        ],
-        currentIndex: 1,
-        onTap: (index) {},
       ),
     );
   }

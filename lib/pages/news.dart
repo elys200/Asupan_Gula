@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 class NewsPage extends StatelessWidget {
   const NewsPage({super.key});
 
+  static const double cardWidth = 180;
+  static const double cardHeight = 210; // sedikit lebih tinggi dari konten card
+
   Widget buildBeritaCard() {
     return Container(
-      width: 180,
-      margin: const EdgeInsets.only(right: 12),
+      width: cardWidth,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
@@ -21,6 +23,7 @@ class NewsPage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // IMAGE
           ClipRRect(
             borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
             child: Image.asset(
@@ -30,13 +33,17 @@ class NewsPage extends StatelessWidget {
               fit: BoxFit.cover,
             ),
           ),
+          // TITLE
           const Padding(
             padding: EdgeInsets.all(8.0),
             child: Text(
               'Studi: Diet Rendah Karbohidrat Efektif Turunkan dalam 3 Bulan',
               style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
+          // BUTTON
           const Padding(
             padding: EdgeInsets.only(left: 8.0, bottom: 8.0),
             child: Chip(
@@ -66,10 +73,15 @@ class NewsPage extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 8),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Row(children: List.generate(2, (_) => buildBeritaCard())),
+        SizedBox(
+          height: cardHeight,
+          child: ListView.separated(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            scrollDirection: Axis.horizontal,
+            itemCount: 4,
+            separatorBuilder: (_, __) => const SizedBox(width: 12),
+            itemBuilder: (_, __) => buildBeritaCard(),
+          ),
         ),
       ],
     );
@@ -79,22 +91,10 @@ class NewsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 1,
-        selectedItemColor: Colors.redAccent,
-        unselectedItemColor: Colors.grey,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.grid_view_rounded),
-            label: '',
-          ),
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: ''),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: ''),
-        ],
-      ),
       body: SafeArea(
         child: ListView(
           children: [
+            // === HEADER ===
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
               decoration: const BoxDecoration(
@@ -108,37 +108,37 @@ class NewsPage extends StatelessWidget {
                 ),
               ),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.arrow_back, color: Colors.white),
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                      ),
-                      const SizedBox(width: 8),
-                      const Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "Hi Elys",
-                            style: TextStyle(color: Colors.white, fontSize: 16),
-                          ),
-                          SizedBox(height: 4),
-                          Text(
-                            "Discover today's headlines",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 22,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+                  // BACK + TEXT WRAPPED
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back, color: Colors.white),
+                    onPressed: () => Navigator.pop(context),
                   ),
+                  const SizedBox(width: 8),
+                  // Expanded supaya text tidak overflow
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: const [
+                        Text(
+                          "Hi Elys",
+                          style: TextStyle(color: Colors.white, fontSize: 16),
+                        ),
+                        SizedBox(height: 4),
+                        Text(
+                          "Discover today's headlines",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                  // AVATAR
                   const CircleAvatar(
                     backgroundImage: AssetImage('assets/images/portrait.png'),
                     radius: 20,
@@ -146,9 +146,12 @@ class NewsPage extends StatelessWidget {
                 ],
               ),
             ),
+
+            // === SECTIONS ===
             buildSection("Rekomendasi"),
             buildSection("Terbaru"),
             buildSection("Fakta Terpilih"),
+
             const SizedBox(height: 16),
           ],
         ),

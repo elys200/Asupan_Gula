@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
@@ -19,29 +20,55 @@ class WelcomeScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 20),
-          const Text(
+          Text(
             'WELCOME TO',
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
+            style: GoogleFonts.inknutAntiqua(
+              fontSize: 35,
+              fontWeight: FontWeight.w500,
               color: Colors.white,
               letterSpacing: 2,
+              shadows: [
+                Shadow(
+                  color: Colors.black.withOpacity(0.25),
+                  offset: const Offset(0, 4),
+                  blurRadius: 4,
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 10),
-          const Text(
+          Text(
             'SweetSense',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w600,
+            style: GoogleFonts.inknutAntiqua(
+              fontSize: 35,
+              fontWeight: FontWeight.w500,
               color: Colors.white,
+              letterSpacing: 2,
+              shadows: [
+                Shadow(
+                  color: Colors.black.withOpacity(0.25),
+                  offset: const Offset(0, 4),
+                  blurRadius: 4,
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 10),
-          const Text(
+          const SizedBox(height: 30),
+          Text(
             'Swipe Less Sugar, Feel More Life',
-            style: TextStyle(fontSize: 14, color: Colors.white),
+            style: GoogleFonts.poppins(
+              fontSize: 15,
+              color: Colors.white,
+              shadows: [
+                Shadow(
+                  color: Colors.black.withOpacity(0.25),
+                  offset: const Offset(0, 4),
+                  blurRadius: 4,
+                ),
+              ],
+            ),
           ),
+
           const Spacer(),
           Padding(
             padding: const EdgeInsets.symmetric(

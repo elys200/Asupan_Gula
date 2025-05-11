@@ -1,30 +1,59 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
+void main() {
+  // Set status bar to be transparent globally
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.light,
+    ),
+  );
+  runApp(const MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        primarySwatch: Colors.red,
+        visualDensity: VisualDensity.adaptivePlatformDensity,
+      ),
+      home: const FoodPage(),
+    );
+  }
+}
 
 class FoodPage extends StatelessWidget {
-  const FoodPage({Key? key}) : super(key: key);
+  const FoodPage({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      bottomNavigationBar: BottomNavigationBar(
-        selectedItemColor: Colors.white,
-        backgroundColor: Colors.red,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.calculate), label: ''),
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: ''),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: ''),
-        ],
-      ),
+      extendBodyBehindAppBar: true,
+      extendBody: true,
       body: SafeArea(
+        top: false, // Don't apply safe area insets at top
+        bottom: false, // Don't apply safe area insets at bottom
         child: Column(
           children: [
-            // Top Section
+            // Top Section with gradient
             Container(
-              padding: const EdgeInsets.all(20),
+              padding: EdgeInsets.fromLTRB(
+                20,
+                MediaQuery.of(context).padding.top +
+                    20, // Add status bar height
+                20,
+                20,
+              ),
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [Colors.redAccent, Colors.orange],
+                  colors: [Color(0xFFE43A15), Color(0xFFE65245)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -40,9 +69,7 @@ class FoodPage extends StatelessWidget {
                     children: [
                       GestureDetector(
                         onTap: () {
-                          Navigator.pop(
-                            context,
-                          ); // This pops the current screen
+                          Navigator.pop(context);
                         },
                         child: const Icon(
                           Icons.arrow_back,
@@ -59,7 +86,7 @@ class FoodPage extends StatelessWidget {
                         ),
                       ),
                       const Spacer(),
-                      CircleAvatar(
+                      const CircleAvatar(
                         backgroundImage: AssetImage(
                           'assets/images/portrait.png',
                         ),
@@ -82,7 +109,7 @@ class FoodPage extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(30),
-                      boxShadow: [
+                      boxShadow: const [
                         BoxShadow(color: Colors.black12, blurRadius: 6),
                       ],
                     ),
@@ -106,11 +133,11 @@ class FoodPage extends StatelessWidget {
                   itemCount: 8,
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
-                    mainAxisSpacing: 15,
-                    crossAxisSpacing: 15,
-                    childAspectRatio: 0.75,
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 12,
+                    childAspectRatio: 0.9, // Adjusted for new card design
                   ),
-                  itemBuilder: (context, index) => FoodCard(),
+                  itemBuilder: (context, index) => const FoodCard(),
                 ),
               ),
             ),
@@ -122,7 +149,7 @@ class FoodPage extends StatelessWidget {
 }
 
 class FoodCard extends StatelessWidget {
-  const FoodCard({Key? key}) : super(key: key);
+  const FoodCard({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -135,45 +162,67 @@ class FoodCard extends StatelessWidget {
             boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 4)],
           ),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Food image
               ClipRRect(
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(15),
                 ),
                 child: Image.asset(
                   'assets/images/food2.png',
-                  height: 130,
+                  height: 110,
                   width: double.infinity,
                   fit: BoxFit.cover,
                 ),
               ),
-              const SizedBox(height: 8),
-              const Text(
-                "Vegetable salad",
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 4),
-              const Text("220 kcal", style: TextStyle(color: Colors.grey)),
-              const Spacer(),
-              Container(
-                margin: const EdgeInsets.only(bottom: 10),
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.redAccent,
-                  borderRadius: BorderRadius.circular(15),
+              const Padding(
+                padding: EdgeInsets.only(left: 10, top: 8, right: 10),
+                child: Text(
+                  "Vegetable salad",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                 ),
-                child: const Text(
-                  "More Detail",
-                  style: TextStyle(color: Colors.white, fontSize: 12),
+              ),
+              // Bottom row with calories and button
+              Padding(
+                padding: const EdgeInsets.only(
+                  left: 10,
+                  right: 10,
+                  top: 5,
+                  bottom: 8,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      "220 kcal",
+                      style: TextStyle(color: Colors.grey, fontSize: 12),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE43A15),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Text(
+                        "More Detail",
+                        style: TextStyle(color: Colors.white, fontSize: 10),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
         ),
+        // Star Icon
         Positioned(
           top: 8,
           right: 8,
-          child: Icon(Icons.star_border, color: Colors.grey),
+          child: const Icon(Icons.star_border, color: Colors.grey),
         ),
       ],
     );

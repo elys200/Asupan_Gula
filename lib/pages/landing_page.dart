@@ -87,7 +87,7 @@ class LandingPage extends StatelessWidget {
 
                       const SizedBox(height: 60),
 
-                      // Teks judul dengan gaya khusus
+                      // Teks judul
                       Text(
                         'Balance your\nsugar\nBoost your Life',
                         style: GoogleFonts.inknutAntiqua(
