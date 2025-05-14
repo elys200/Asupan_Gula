@@ -111,7 +111,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                       const SizedBox(height: 10),
                       ElevatedButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          Navigator.pushNamed(context, '/perhitungan_gula');
+                        },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.redAccent,
                           shape: RoundedRectangleBorder(
@@ -152,15 +154,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
             CarouselSlider(
               items:
                   imageAssets.map((assetPath) {
-                    return ClipRRect(
-                      borderRadius: BorderRadius.circular(20),
-                      child: Image.asset(
-                        assetPath,
-                        fit: BoxFit.cover,
-                        width: double.infinity,
+                    return GestureDetector(
+                      onTap: () {
+                        Navigator.pushNamed(context, '/food');
+                      },
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
+                        child: Image.asset(
+                          assetPath,
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                        ),
                       ),
                     );
                   }).toList(),
+
               options: CarouselOptions(
                 height: 200,
                 autoPlay: true,
@@ -201,38 +209,44 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: CarouselSlider(
                 items:
                     newsImages.map((assetPath) {
-                      return Stack(
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(20),
-                            child: Image.asset(
-                              assetPath,
-                              fit: BoxFit.cover,
-                              width: double.infinity,
-                              height: 150,
+                      return GestureDetector(
+                        onTap: () {
+                          Navigator.pushNamed(context, '/news');
+                        },
+                        child: Stack(
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(20),
+                              child: Image.asset(
+                                assetPath,
+                                fit: BoxFit.cover,
+                                width: double.infinity,
+                                height: 150,
+                              ),
                             ),
-                          ),
-                          Positioned(
-                            bottom: 0,
-                            left: 0,
-                            right: 0,
-                            child: Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: Colors.black.withOpacity(0.5),
-                                borderRadius: const BorderRadius.vertical(
-                                  bottom: Radius.circular(20),
+                            Positioned(
+                              bottom: 0,
+                              left: 0,
+                              right: 0,
+                              child: Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withOpacity(0.5),
+                                  borderRadius: const BorderRadius.vertical(
+                                    bottom: Radius.circular(20),
+                                  ),
+                                ),
+                                child: const Text(
+                                  'Headlines !!',
+                                  style: TextStyle(color: Colors.white),
                                 ),
                               ),
-                              child: const Text(
-                                'Headlines !!',
-                                style: TextStyle(color: Colors.white),
-                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       );
                     }).toList(),
+
                 options: CarouselOptions(
                   height: 150,
                   autoPlay: true,

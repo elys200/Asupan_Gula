@@ -5,34 +5,41 @@ class OnboardingScreen2 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size; // Screen size for responsiveness
+
     return Scaffold(
       backgroundColor: const Color(0xFFFF3D00),
       body: SafeArea(
         child: Column(
           children: [
-            const SizedBox(),
+            const SizedBox(height: 10),
             Expanded(
               flex: 4,
-              child: Center(
-                child: Column(
-                  children: [
-                    Image.asset('assets/images/orang2.png', height: 400),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        _dot(isActive: false),
-                        _dot(isActive: true),
-                        _dot(isActive: false),
-                      ],
-                    ),
-                  ],
-                ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Image.asset(
+                    'assets/images/orang2.png',
+                    height: size.height * 0.35,
+                    fit: BoxFit.contain,
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _dot(isActive: false),
+                      _dot(isActive: true),
+                      _dot(isActive: false),
+                    ],
+                  ),
+                ],
               ),
             ),
 
             Expanded(
               flex: 4,
               child: Container(
+                width: double.infinity,
                 decoration: const BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
@@ -59,11 +66,14 @@ class OnboardingScreen2 extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    const Text(
-                      'Menjaga keseimbangan antara pekerjaan dan gaya hidup sehat dimulai dari kebiasaan kecil, termasuk mengatur pola makan. Asupan gula yang terkontrol membantu tubuh tetap bugar, pikiran lebih fokus, dan produktivitas tetap terjaga sepanjang hari.',
-                      style: TextStyle(fontSize: 14, color: Colors.black87),
+                    const Expanded(
+                      child: SingleChildScrollView(
+                        child: Text(
+                          'Menjaga keseimbangan antara pekerjaan dan gaya hidup sehat dimulai dari kebiasaan kecil, termasuk mengatur pola makan. Asupan gula yang terkontrol membantu tubuh tetap bugar, pikiran lebih fokus, dan produktivitas tetap terjaga sepanjang hari.',
+                          style: TextStyle(fontSize: 14, color: Colors.black87),
+                        ),
+                      ),
                     ),
-                    const Spacer(),
                     Align(
                       alignment: Alignment.bottomRight,
                       child: GestureDetector(
