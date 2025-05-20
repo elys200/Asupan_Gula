@@ -8,7 +8,7 @@ class LoginScreen extends StatelessWidget {
     return Scaffold(
       body: Stack(
         children: [
-          // Top background curve
+          // Top background curve (smaller)
           Positioned(
             top: 0,
             left: 0,
@@ -16,7 +16,7 @@ class LoginScreen extends StatelessWidget {
             child: ClipPath(
               clipper: TopCurveClipper(),
               child: Container(
-                height: 250,
+                height: 100, // Reduced from 250 to 100
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
                     colors: [Color(0xFFE43A15), Color(0xFFE65245)],
@@ -27,7 +27,7 @@ class LoginScreen extends StatelessWidget {
                 child: Opacity(
                   opacity: 0.2,
                   child: Image.asset(
-                    'assets/images/food.png',
+                    'assets/images/food3.png',
                     fit: BoxFit.cover,
                   ),
                 ),
@@ -54,7 +54,7 @@ class LoginScreen extends StatelessWidget {
                 child: Opacity(
                   opacity: 0.2,
                   child: Image.asset(
-                    'assets/images/food.png',
+                    'assets/images/food3.png',
                     fit: BoxFit.cover,
                   ),
                 ),
@@ -75,7 +75,9 @@ class LoginScreen extends StatelessWidget {
                       Navigator.pop(context);
                     },
                   ),
-                  const SizedBox(height: 240),
+                  const SizedBox(
+                    height: 120,
+                  ), // Reduced spacing for smaller top curve
                   const Text(
                     'Login',
                     style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
@@ -176,19 +178,20 @@ class CustomTextField extends StatelessWidget {
   }
 }
 
-// Top Curve Clipper
+// Smaller Top Curve Clipper
 class TopCurveClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
     Path path = Path();
-    path.lineTo(0, size.height - 50);
+    path.lineTo(0, size.height - 5);
     path.quadraticBezierTo(
       size.width / 2,
-      size.height,
+      size.height + 10, // slight dip
       size.width,
-      size.height - 50,
+      size.height - 5,
     );
     path.lineTo(size.width, 0);
+    path.close();
     return path;
   }
 
@@ -196,15 +199,36 @@ class TopCurveClipper extends CustomClipper<Path> {
   bool shouldReclip(CustomClipper<Path> oldClipper) => false;
 }
 
-// Bottom Curve Clipper
+// Bottom Curve Clipper (unchanged)
 class BottomCurveClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
     Path path = Path();
-    path.moveTo(0, 50);
-    path.quadraticBezierTo(size.width / 2, 0, size.width, 50);
+
+    path.moveTo(0, size.height * 0.2);
+    path.quadraticBezierTo(
+      size.width * 0.25,
+      size.height * 0.5,
+      size.width * 0.4,
+      size.height * 0.4,
+    );
+    path.quadraticBezierTo(
+      size.width * 0.55,
+      size.height * 0.36,
+      size.width * 0.65,
+      size.height * 0.35,
+    );
+    path.quadraticBezierTo(
+      size.width * 0.9,
+      size.height * 0.5,
+      size.width,
+      size.height,
+    );
+
     path.lineTo(size.width, size.height);
     path.lineTo(0, size.height);
+    path.close();
+
     return path;
   }
 

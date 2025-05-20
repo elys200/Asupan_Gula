@@ -16,10 +16,10 @@ class RegisterScreen extends StatelessWidget {
             child: ClipPath(
               clipper: TopCurveClipper(),
               child: Container(
-                height: 250,
+                height: 100,
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [Color(0xFFE43A15), Color(0xFFE65245)],
+                    colors: [Color(0xFFFF6F4D), Color(0xFFFF8478)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -27,7 +27,7 @@ class RegisterScreen extends StatelessWidget {
                 child: Opacity(
                   opacity: 0.2,
                   child: Image.asset(
-                    'assets/images/food.png', // optional pattern image
+                    'assets/images/food3.png', // optional pattern image
                     fit: BoxFit.cover,
                   ),
                 ),
@@ -45,7 +45,7 @@ class RegisterScreen extends StatelessWidget {
                 height: 150,
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [Color(0xFFE43A15), Color(0xFFE65245)],
+                    colors: [Color(0xFFFF6F4D), Color(0xFFFF8478)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -53,7 +53,7 @@ class RegisterScreen extends StatelessWidget {
                 child: Opacity(
                   opacity: 0.2,
                   child: Image.asset(
-                    'assets/images/food.png', // optional pattern image
+                    'assets/images/food3.png', // optional pattern image
                     fit: BoxFit.cover,
                   ),
                 ),
@@ -156,19 +156,22 @@ class CustomTextField extends StatelessWidget {
   }
 }
 
-// Top Curve Clipper
+// Symmetrical More Curved Top Curve Clipper
 class TopCurveClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
     Path path = Path();
-    path.lineTo(0, size.height - 50);
+
+    path.lineTo(0, size.height - 40); // Left point start
     path.quadraticBezierTo(
-      size.width / 2,
-      size.height,
-      size.width,
-      size.height - 50,
+      size.width / 2, // Control point in the center
+      size.height + 30, // Deeper dip
+      size.width, // End at full width
+      size.height - 40, // Same height as start for symmetry
     );
-    path.lineTo(size.width, 0);
+    path.lineTo(size.width, 0); // Top-right
+    path.close();
+
     return path;
   }
 
@@ -176,15 +179,44 @@ class TopCurveClipper extends CustomClipper<Path> {
   bool shouldReclip(CustomClipper<Path> oldClipper) => false;
 }
 
-// Bottom Curve Clipper
+// Bottom Curve Clipper (Updated)
 class BottomCurveClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
     Path path = Path();
-    path.moveTo(0, 50);
-    path.quadraticBezierTo(size.width / 2, 0, size.width, 50);
+
+    // Start high on the left
+    path.moveTo(0, size.height * 0.2);
+
+    // First dip (low)
+    path.quadraticBezierTo(
+      size.width * 0.25,
+      size.height * 0.5,
+      size.width * 0.4,
+      size.height * 0.4,
+    );
+
+    // Middle bump (medium)
+    path.quadraticBezierTo(
+      size.width * 0.55,
+      size.height * 0.36,
+      size.width * 0.65,
+      size.height * 0.35,
+    );
+
+    // Final dip (deep bottom-right)
+    path.quadraticBezierTo(
+      size.width * 0.9,
+      size.height * 0.5,
+      size.width,
+      size.height,
+    );
+
+    // Finish the path
     path.lineTo(size.width, size.height);
     path.lineTo(0, size.height);
+    path.close();
+
     return path;
   }
 
