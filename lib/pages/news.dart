@@ -1,12 +1,36 @@
 import 'package:flutter/material.dart';
+import 'news_detail.dart'; // pastikan import ini benar sesuai lokasi file
 
 class NewsPage extends StatelessWidget {
   const NewsPage({super.key});
 
   static const double cardWidth = 180;
-  static const double cardHeight = 210; // sedikit lebih tinggi dari konten card
+  static const double cardHeight = 210;
 
-  Widget buildBeritaCard() {
+  // Dummy data berita
+  final List<Map<String, String>> newsList = const [
+    {
+      "title": "Studi: Diet Rendah Karbohidrat Efektif Turunkan dalam 3 Bulan",
+      "date": "2024-08-15",
+      "author": "Prof.Sarah Tanuwijaya, Ph.D",
+      "content": "Sebuah studi terbaru mengungkapkan bahwa diet rendah karbohidrat mampu menurunkan berat badan secara signifikan hanya dalam waktu tiga bulan. Dalam penelitian tersebut, peserta yang mengadopsi pola makan rendah karbohidrat mengalami penurunan berat badan yang lebih besar dibandingkan dengan mereka yang menjalani diet rendah lemak. Temuan ini memperkuat pandangan bahwa pengurangan asupan karbohidrat dapat menjadi metode yang efektif untuk mengatasi masalah berat badan dalam jangka pendek. Selain menurunkan berat badan, diet rendah karbohidrat juga menunjukkan dampak positif terhadap kesehatan metabolik. Studi mencatat adanya perbaikan pada kadar gula darah dan kolesterol peserta, yang mengindikasikan potensi manfaat lebih luas dari diet ini. Para peneliti pun menyimpulkan bahwa pola makan rendah karbohidrat bisa menjadi salah satu strategi yang layak dipertimbangkan untuk meningkatkan kesehatan secara keseluruhan, terutama bagi mereka yang memiliki masalah kelebihan berat badan atau gangguan metabolik.",
+      "sourceTitle": "Health Magazine",
+      "sourceImage": "assets/images/news1.png",
+      "sourceUrl": "https://healthmagazine.com",
+    },
+    {
+      "title": "Manfaat Jalan Pagi untuk Kesehatan Jantung",
+      "date": "2025-05-20",
+      "author": "Dr. Fitri",
+      "content": "Jalan pagi secara rutin terbukti memberikan manfaat besar bagi kesehatan jantung. Aktivitas fisik ringan ini dapat membantu melancarkan peredaran darah, menurunkan tekanan darah, serta mengurangi kadar kolesterol jahat (LDL) dalam tubuh. Dengan berjalan kaki selama 30 menit setiap pagi, jantung bekerja lebih efisien dan risiko penyakit jantung seperti serangan jantung dan stroke dapat ditekan secara signifikan. Selain itu, jalan pagi juga dapat meningkatkan kualitas hidup secara keseluruhan. Aktivitas ini membantu mengurangi stres, meningkatkan suasana hati, dan menjaga berat badan tetap ideal—semua faktor yang turut mendukung kesehatan jantung. Para ahli kesehatan menyarankan untuk menjadikan jalan pagi sebagai bagian dari rutinitas harian, terutama bagi mereka yang ingin menjaga jantung tetap sehat tanpa harus melakukan olahraga berat.",
+      "sourceTitle": "Daily Health",
+      "sourceImage": "assets/images/news1.png",
+      "sourceUrl": "https://dailyhealth.com",
+    },
+    // Tambahkan data berita lainnya
+  ];
+
+  Widget buildBeritaCard(BuildContext context, Map<String, String> newsItem) {
     return Container(
       width: cardWidth,
       decoration: BoxDecoration(
@@ -27,32 +51,50 @@ class NewsPage extends StatelessWidget {
           ClipRRect(
             borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
             child: Image.asset(
-              'assets/images/news1.png',
+              newsItem["sourceImage"]!,
               height: 100,
               width: double.infinity,
               fit: BoxFit.cover,
             ),
           ),
           // TITLE
-          const Padding(
-            padding: EdgeInsets.all(8.0),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
             child: Text(
-              'Studi: Diet Rendah Karbohidrat Efektif Turunkan dalam 3 Bulan',
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+              newsItem["title"]!,
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
           ),
           // BUTTON
-          const Padding(
-            padding: EdgeInsets.only(left: 8.0, bottom: 8.0),
-            child: Chip(
-              label: Text(
-                'Lihat Detail',
-                style: TextStyle(color: Colors.white, fontSize: 10),
+          Padding(
+            padding: const EdgeInsets.only(left: 8.0, bottom: 8.0),
+            child: GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => NewsDetailPage(
+                      date: newsItem["date"]!,
+                      title: newsItem["title"]!,
+                      author: newsItem["author"]!,
+                      content: newsItem["content"]!,
+                      sourceTitle: newsItem["sourceTitle"]!,
+                      sourceImage: newsItem["sourceImage"]!,
+                      sourceUrl: newsItem["sourceUrl"]!,
+                    ),
+                  ),
+                );
+              },
+              child: const Chip(
+                label: Text(
+                  'Lihat Detail',
+                  style: TextStyle(color: Colors.white, fontSize: 10),
+                ),
+                backgroundColor: Colors.redAccent,
+                padding: EdgeInsets.symmetric(horizontal: 4),
               ),
-              backgroundColor: Colors.redAccent,
-              padding: EdgeInsets.symmetric(horizontal: 4),
             ),
           ),
         ],
@@ -60,7 +102,7 @@ class NewsPage extends StatelessWidget {
     );
   }
 
-  Widget buildSection(String title) {
+  Widget buildSection(BuildContext context, String title) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -78,9 +120,9 @@ class NewsPage extends StatelessWidget {
           child: ListView.separated(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             scrollDirection: Axis.horizontal,
-            itemCount: 4,
+            itemCount: newsList.length,
             separatorBuilder: (_, __) => const SizedBox(width: 12),
-            itemBuilder: (_, __) => buildBeritaCard(),
+            itemBuilder: (context, index) => buildBeritaCard(context, newsList[index]),
           ),
         ),
       ],
@@ -103,19 +145,15 @@ class NewsPage extends StatelessWidget {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
-                borderRadius: BorderRadius.vertical(
-                  bottom: Radius.circular(24),
-                ),
+                borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
               ),
               child: Row(
                 children: [
-                  // BACK + TEXT WRAPPED
                   IconButton(
                     icon: const Icon(Icons.arrow_back, color: Colors.white),
                     onPressed: () => Navigator.pop(context),
                   ),
                   const SizedBox(width: 8),
-                  // Expanded supaya text tidak overflow
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -138,7 +176,6 @@ class NewsPage extends StatelessWidget {
                       ],
                     ),
                   ),
-                  // AVATAR
                   const CircleAvatar(
                     backgroundImage: AssetImage('assets/images/portrait.png'),
                     radius: 20,
@@ -148,9 +185,9 @@ class NewsPage extends StatelessWidget {
             ),
 
             // === SECTIONS ===
-            buildSection("Rekomendasi"),
-            buildSection("Terbaru"),
-            buildSection("Fakta Terpilih"),
+            buildSection(context, "Rekomendasi"),
+            buildSection(context, "Terbaru"),
+            buildSection(context, "Fakta Terpilih"),
 
             const SizedBox(height: 16),
           ],

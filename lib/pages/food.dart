@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'food_detail.dart';
 
 void main() {
   // Set status bar to be transparent globally
@@ -198,7 +199,14 @@ class FoodCard extends StatelessWidget {
                       "220 kcal",
                       style: TextStyle(color: Colors.grey, fontSize: 12),
                     ),
-                    Container(
+                   GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                         context,
+                         MaterialPageRoute(builder: (_) => const FoodDetailPage()),
+                      );
+                    },
+                    child: Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 8,
                         vertical: 3,
@@ -207,11 +215,12 @@ class FoodCard extends StatelessWidget {
                         color: const Color(0xFFE43A15),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Text(
-                        "More Detail",
-                        style: TextStyle(color: Colors.white, fontSize: 10),
-                      ),
+                     child: const Text(
+                      "More Detail",
+                       style: TextStyle(color: Colors.white, fontSize: 10),
+                     ),
                     ),
+                   ),
                   ],
                 ),
               ),
