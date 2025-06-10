@@ -5,10 +5,17 @@ class RegisterScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Get screen dimensions for a fully responsive layout
+    final screenHeight = MediaQuery.of(context).size.height;
+    final screenWidth = MediaQuery.of(context).size.width;
+
     return Scaffold(
       body: Stack(
+        // UPDATED: Set fit to expand to make the Stack fill the entire screen.
+        // This ensures the Positioned widgets are anchored to the screen edges.
+        fit: StackFit.expand,
         children: [
-          // Top Curved Background
+          // Top Curved Background - remains responsive
           Positioned(
             top: 0,
             left: 0,
@@ -16,10 +23,10 @@ class RegisterScreen extends StatelessWidget {
             child: ClipPath(
               clipper: TopCurveClipper(),
               child: Container(
-                height: 100,
+                height: screenHeight * 0.1, // Responsive height
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [Color(0xFFFF6F4D), Color(0xFFFF8478)],
+                    colors: [Color(0xFFE43A15), Color(0xFFE65245)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -27,14 +34,16 @@ class RegisterScreen extends StatelessWidget {
                 child: Opacity(
                   opacity: 0.2,
                   child: Image.asset(
-                    'assets/images/food3.png', // optional pattern image
+                    'assets/images/food.png', // optional pattern image
                     fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) =>
+                        const SizedBox.shrink(), // Handles asset not found
                   ),
                 ),
               ),
             ),
           ),
-          // Bottom Curved Background
+          // Bottom Curved Background - positioned to always stay at the bottom
           Positioned(
             bottom: 0,
             left: 0,
@@ -42,10 +51,10 @@ class RegisterScreen extends StatelessWidget {
             child: ClipPath(
               clipper: BottomCurveClipper(),
               child: Container(
-                height: 150,
+                height: screenHeight * 0.2, // Responsive height
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [Color(0xFFFF6F4D), Color(0xFFFF8478)],
+                    colors: [Color(0xFFE43A15), Color(0xFFE65245)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -53,64 +62,84 @@ class RegisterScreen extends StatelessWidget {
                 child: Opacity(
                   opacity: 0.2,
                   child: Image.asset(
-                    'assets/images/food3.png', // optional pattern image
+                    'assets/images/food.png', // optional pattern image
                     fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) =>
+                        const SizedBox.shrink(), // Handles asset not found
                   ),
                 ),
               ),
             ),
           ),
-          // Main Content
+          // Main Content - now fully responsive and handles scrolling correctly
           SafeArea(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back),
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                  ),
-                  const SizedBox(height: 240),
-                  const Text(
-                    'Register',
-                    style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 30),
-                  const CustomTextField(hint: 'Username'),
-                  const SizedBox(height: 20),
-                  const CustomTextField(hint: 'Password', obscureText: true),
-                  const SizedBox(height: 20),
-                  const CustomTextField(
-                    hint: 'Confirm Password',
-                    obscureText: true,
-                  ),
-                  const SizedBox(height: 30),
-                  Center(
-                    child: ElevatedButton(
+              padding: EdgeInsets.symmetric(
+                  horizontal: screenWidth * 0.06), // Responsive padding
+              child: SingleChildScrollView(
+                // Allows content to scroll
+                // Added padding to the bottom to ensure content doesn't scroll under the fixed bottom curve
+                padding: EdgeInsets.only(bottom: screenHeight * 0.2),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back),
                       onPressed: () {
-                        Navigator.pushNamed(context, '/dashboard');
+                        Navigator.pop(context);
                       },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFFF5858),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 80,
-                          vertical: 14,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        elevation: 5,
-                      ),
-                      child: const Text(
-                        'Register',
-                        style: TextStyle(color: Colors.white),
+                    ),
+                    SizedBox(height: screenHeight * 0.1), // Responsive spacing
+                    Text(
+                      'Register',
+                      style: TextStyle(
+                        fontSize: screenWidth * 0.08, // Responsive font size
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                  ),
-                ],
+                    SizedBox(height: screenHeight * 0.04), // Responsive spacing
+                    const CustomTextField(hint: 'Username'),
+                    SizedBox(
+                        height: screenHeight * 0.025), // Responsive spacing
+                    const CustomTextField(hint: 'Password', obscureText: true),
+                    SizedBox(
+                        height: screenHeight * 0.025), // Responsive spacing
+                    const CustomTextField(
+                      hint: 'Confirm Password',
+                      obscureText: true,
+                    ),
+                    SizedBox(height: screenHeight * 0.05), // Responsive spacing
+                    Center(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          // Example navigation. Ensure '/dashboard' route exists.
+                          Navigator.pushNamed(context, '/dashboard');
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFFF5858),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: screenWidth * 0.2, // Responsive padding
+                            vertical:
+                                screenHeight * 0.018, // Responsive padding
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(
+                                screenWidth * 0.03), // Responsive radius
+                          ),
+                          elevation: 5,
+                        ),
+                        child: Text(
+                          'Register',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize:
+                                screenWidth * 0.04, // Responsive font size
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -120,7 +149,7 @@ class RegisterScreen extends StatelessWidget {
   }
 }
 
-// Custom Text Field Widget
+// Custom Text Field Widget - remains responsive
 class CustomTextField extends StatelessWidget {
   final String hint;
   final bool obscureText;
@@ -133,22 +162,27 @@ class CustomTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return TextField(
       obscureText: obscureText,
       decoration: InputDecoration(
         hintText: hint,
         filled: true,
         fillColor: const Color(0xFFF5F5F5),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 20,
-          vertical: 16,
+        contentPadding: EdgeInsets.symmetric(
+          horizontal: screenWidth * 0.05, // Responsive padding
+          vertical: screenHeight * 0.02, // Responsive padding
         ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius:
+              BorderRadius.circular(screenWidth * 0.05), // Responsive radius
           borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius:
+              BorderRadius.circular(screenWidth * 0.05), // Responsive radius
           borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
         ),
       ),
@@ -156,22 +190,20 @@ class CustomTextField extends StatelessWidget {
   }
 }
 
-// Symmetrical More Curved Top Curve Clipper
+// Clippers remain the same as they operate on the size of their parent container
 class TopCurveClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
     Path path = Path();
-
-    path.lineTo(0, size.height - 40); // Left point start
+    path.lineTo(0, size.height - 40);
     path.quadraticBezierTo(
-      size.width / 2, // Control point in the center
-      size.height + 30, // Deeper dip
-      size.width, // End at full width
-      size.height - 40, // Same height as start for symmetry
+      size.width / 2,
+      size.height + 30,
+      size.width,
+      size.height - 40,
     );
-    path.lineTo(size.width, 0); // Top-right
+    path.lineTo(size.width, 0);
     path.close();
-
     return path;
   }
 
@@ -179,44 +211,32 @@ class TopCurveClipper extends CustomClipper<Path> {
   bool shouldReclip(CustomClipper<Path> oldClipper) => false;
 }
 
-// Bottom Curve Clipper (Updated)
 class BottomCurveClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
     Path path = Path();
-
-    // Start high on the left
     path.moveTo(0, size.height * 0.2);
-
-    // First dip (low)
     path.quadraticBezierTo(
       size.width * 0.25,
       size.height * 0.5,
       size.width * 0.4,
       size.height * 0.4,
     );
-
-    // Middle bump (medium)
     path.quadraticBezierTo(
       size.width * 0.55,
       size.height * 0.36,
       size.width * 0.65,
       size.height * 0.35,
     );
-
-    // Final dip (deep bottom-right)
     path.quadraticBezierTo(
       size.width * 0.9,
       size.height * 0.5,
       size.width,
       size.height,
     );
-
-    // Finish the path
     path.lineTo(size.width, size.height);
     path.lineTo(0, size.height);
     path.close();
-
     return path;
   }
 

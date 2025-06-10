@@ -39,7 +39,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     height: 200,
                     decoration: const BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [Colors.redAccent, Colors.orangeAccent],
+                        colors: [Color(0xFFFF6F4D), Color(0xFFFF8478)],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
@@ -152,23 +152,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
             // Food Recommendation Carousel
             CarouselSlider(
-              items:
-                  imageAssets.map((assetPath) {
-                    return GestureDetector(
-                      onTap: () {
-                        Navigator.pushNamed(context, '/food');
-                      },
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(20),
-                        child: Image.asset(
-                          assetPath,
-                          fit: BoxFit.cover,
-                          width: double.infinity,
-                        ),
-                      ),
-                    );
-                  }).toList(),
-
+              items: imageAssets.map((assetPath) {
+                return GestureDetector(
+                  onTap: () {
+                    Navigator.pushNamed(context, '/food');
+                  },
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: Image.asset(
+                      assetPath,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                    ),
+                  ),
+                );
+              }).toList(),
               options: CarouselOptions(
                 height: 200,
                 autoPlay: true,
@@ -207,46 +205,44 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: CarouselSlider(
-                items:
-                    newsImages.map((assetPath) {
-                      return GestureDetector(
-                        onTap: () {
-                          Navigator.pushNamed(context, '/news');
-                        },
-                        child: Stack(
-                          children: [
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(20),
-                              child: Image.asset(
-                                assetPath,
-                                fit: BoxFit.cover,
-                                width: double.infinity,
-                                height: 150,
-                              ),
-                            ),
-                            Positioned(
-                              bottom: 0,
-                              left: 0,
-                              right: 0,
-                              child: Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: Colors.black.withOpacity(0.5),
-                                  borderRadius: const BorderRadius.vertical(
-                                    bottom: Radius.circular(20),
-                                  ),
-                                ),
-                                child: const Text(
-                                  'Headlines !!',
-                                  style: TextStyle(color: Colors.white),
-                                ),
-                              ),
-                            ),
-                          ],
+                items: newsImages.map((assetPath) {
+                  return GestureDetector(
+                    onTap: () {
+                      Navigator.pushNamed(context, '/news');
+                    },
+                    child: Stack(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(20),
+                          child: Image.asset(
+                            assetPath,
+                            fit: BoxFit.cover,
+                            width: double.infinity,
+                            height: 150,
+                          ),
                         ),
-                      );
-                    }).toList(),
-
+                        Positioned(
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withOpacity(0.5),
+                              borderRadius: const BorderRadius.vertical(
+                                bottom: Radius.circular(20),
+                              ),
+                            ),
+                            child: const Text(
+                              'Headlines !!',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
                 options: CarouselOptions(
                   height: 150,
                   autoPlay: true,
