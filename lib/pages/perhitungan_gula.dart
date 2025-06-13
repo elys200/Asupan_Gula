@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'hitung.dart'; // pastikan halaman ini ada
 
 class PerhitunganGulaPage extends StatefulWidget {
   const PerhitunganGulaPage({super.key});
@@ -12,6 +13,14 @@ class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
   String? selectedWaktuMakan = 'Makan Siang';
   DateTime selectedDate = DateTime.now();
   final makananList = [
+    {'nama': 'Telur Rebus', 'jumlah': '2 sedang'},
+    {'nama': 'Salad Sayur', 'jumlah': '1 mangkok'},
+    {'nama': 'Dada ayam', 'jumlah': '150 gram'},
+  ];
+  String? selectedWaktuMakan = 'Makan Siang';
+  DateTime selectedDate = DateTime.now();
+
+  final List<Map<String, String>> makananList = [
     {'nama': 'Telur Rebus', 'jumlah': '2 sedang'},
     {'nama': 'Salad Sayur', 'jumlah': '1 mangkok'},
     {'nama': 'Dada ayam', 'jumlah': '150 gram'},
@@ -30,7 +39,7 @@ class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: selectedDate,
-      firstDate: DateTime(2022),
+      firstDate: DateTime(2000),
       lastDate: DateTime(2100),
     );
 
@@ -55,15 +64,11 @@ class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
             children: [
               TextField(
                 decoration: const InputDecoration(labelText: 'Nama Makanan'),
-                onChanged: (value) {
-                  namaMakanan = value;
-                },
+                onChanged: (value) => namaMakanan = value,
               ),
               TextField(
                 decoration: const InputDecoration(labelText: 'Jumlah'),
-                onChanged: (value) {
-                  jumlahMakanan = value;
-                },
+                onChanged: (value) => jumlahMakanan = value,
               ),
             ],
           ),
@@ -95,16 +100,87 @@ class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
     );
   }
 
+  void _showPopupDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          contentPadding: const EdgeInsets.all(24),
+          insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 100),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Data Perhitungan',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 16),
+                Text('Waktu Makan: $selectedWaktuMakan'),
+                const SizedBox(height: 8),
+                const Text('Total Kalori: 450 kkal'),
+                const Text('Estimasi Gula: 2,5 gram'),
+                const SizedBox(height: 20),
+                const Divider(),
+                const SizedBox(height: 10),
+                const Text('Apakah Anda ingin melanjutkan?'),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: const Text('Kembali'),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const HitungPage()),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.redAccent,
+                        ),
+                        child: const Text('Lanjut'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _hapusMakanan(int index) {
+    setState(() {
+      makananList.removeAt(index);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.redAccent,
       backgroundColor: Colors.redAccent,
       appBar: AppBar(
         title: const Text('Perhitungan'),
         backgroundColor: Colors.redAccent,
         elevation: 0,
+        elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
           onPressed: () => Navigator.pop(context),
         ),
         actions: const [
@@ -125,7 +201,6 @@ class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            // Gula darah prompt
             Row(
               children: const [
                 CircleAvatar(
@@ -142,14 +217,13 @@ class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
               ],
             ),
             const SizedBox(height: 20),
-
             const Text(
               'Masukkan data terbarumu sekarang',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),
 
-            // Time Input (Date)
+            // Date Picker
             Card(
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -167,6 +241,7 @@ class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
             const Text('Pilih waktu makan'),
             const SizedBox(height: 10),
 
+            // Pilihan waktu makan
             GridView.count(
               crossAxisCount: 3,
               shrinkWrap: true,
@@ -223,14 +298,21 @@ class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Column(
-                children: makananList.map((item) {
+                children: makananList.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final item = entry.value;
                   return Column(
                     children: [
                       ListTile(
                         title: Text(item['nama']!),
                         subtitle: Text(item['jumlah']!),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.delete, color: Colors.redAccent),
+                          onPressed: () => _hapusMakanan(index),
+                        ),
                       ),
-                      const Divider(height: 1),
+                      if (index != makananList.length - 1)
+                        const Divider(height: 1),
                     ],
                   );
                 }).toList(),
@@ -240,17 +322,13 @@ class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
             const SizedBox(height: 30),
             Center(
               child: ElevatedButton(
-                onPressed: () {
-                  // Logic hitung di sini
-                },
+                onPressed: _showPopupDialog,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.redAccent,
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 30, vertical: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  elevation: 4,
                 ),
                 child: const Text('Hitung'),
               ),
