@@ -1,5 +1,9 @@
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+
+// Enum to manage the state of the sugar status selector
+enum SugarStatus { none, low, normal, high }
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -22,9 +26,58 @@ class _DashboardScreenState extends State<DashboardScreen> {
   ];
 
   int currentIndex = 0;
+  // State variable to track the selected sugar status
+  SugarStatus _selectedStatus = SugarStatus.none;
+
+  // Helper method to build the status selector boxes
+  Widget _buildStatusBox(SugarStatus status, String label) {
+    bool isSelected = _selectedStatus == status;
+
+    // Define custom borders for each box to make them stick together
+    final Border border;
+    if (status == SugarStatus.low) {
+      // The first box has a full border
+      const double boldWidth = 1.5;
+      border = Border.all(color: Colors.grey.shade400, width: boldWidth);
+    } else {
+      // Subsequent boxes have no left border to connect seamlessly
+      border = Border(
+        top: BorderSide(color: Colors.grey.shade400, width: 1.5),
+        bottom: BorderSide(color: Colors.grey.shade400, width: 1.5),
+        right: BorderSide(color: Colors.grey.shade400, width: 1.5),
+      );
+    }
+
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedStatus = status;
+        });
+      },
+      child: Column(
+        children: [
+          Container(
+            height: 30,
+            width: 70, // Made width smaller for a more compact look
+            // The margin property has been removed to allow boxes to stick together
+            decoration: BoxDecoration(
+              color: isSelected ? const Color(0xFFE65245) : Colors.grey[300],
+              border: border,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(label),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    // Formatting the date to match the UI
+    final String formattedDate =
+        DateFormat('EEEE\nd/M/y').format(DateTime.now());
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SingleChildScrollView(
@@ -32,6 +85,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
           children: [
             // Top Greeting
             Stack(
+              clipBehavior: Clip.none,
+              alignment: Alignment.center,
               children: [
                 ClipPath(
                   clipper: BottomCurveClipper(),
@@ -70,67 +125,102 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ],
                   ),
                 ),
-              ],
-            ),
-
-            const SizedBox(height: 20),
-
-            // Sugar Status Box
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Card(
-                elevation: 4,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    children: [
-                      const Text(
-                        "Today Sugar",
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                // The new "Today Sugar" card is positioned to overlap the header slightly
+                Positioned(
+                  top: 150,
+                  left: 16,
+                  right: 16,
+                  child: Card(
+                    elevation: 8,
+                    shadowColor: Colors.black54,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Text('Low'),
-                          Container(
-                            width: 60,
-                            height: 20,
-                            color: Colors.grey[300],
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Today Sugar',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 18,
+                                        decoration: TextDecoration.underline,
+                                      ),
+                                    ),
+                                    SizedBox(height: 4),
+                                    Text('Status',
+                                        style: TextStyle(
+                                            fontSize: 16, color: Colors.grey)),
+                                  ],
+                                ),
+                              ),
+                              SizedBox(
+                                child: Text(
+                                  formattedDate,
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                          const Text('Normal'),
-                          Container(
-                            width: 60,
-                            height: 20,
-                            color: Colors.grey[300],
+                          const SizedBox(height: 16),
+                          // Interactive Status Selector
+                          Row(
+                            // Changed to MainAxisAlignment.start to align the group of boxes to the left
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
+                              _buildStatusBox(SugarStatus.low, 'Low'),
+                              _buildStatusBox(SugarStatus.normal, 'Normal'),
+                              _buildStatusBox(SugarStatus.high, 'High'),
+                            ],
                           ),
-                          const Text('High'),
+                          const SizedBox(height: 16),
+                          // Jurnal Button
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: () {
+                                Navigator.pushNamed(context, '/jurnal');
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFFF94F45),
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 12),
+                              ),
+                              child: const Text(
+                                'Jurnal',
+                                style: TextStyle(
+                                    fontSize: 16, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ),
                         ],
                       ),
-                      const SizedBox(height: 10),
-                      ElevatedButton(
-                        onPressed: () {
-                          Navigator.pushNamed(context, '/perhitungan_gula');
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.redAccent,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        child: const Text('Start Calculate'),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
-              ),
+              ],
             ),
+            // Added space to account for the new, larger card
+            const SizedBox(height: 180),
 
-            const SizedBox(height: 20),
-
-            // Food Recommendation Title
+            // Food Recommendation Section
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Row(
@@ -149,8 +239,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ],
               ),
             ),
-
-            // Food Recommendation Carousel
             CarouselSlider(
               items: imageAssets.map((assetPath) {
                 return GestureDetector(
@@ -181,7 +269,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
             const SizedBox(height: 20),
 
-            // News Section Title
+            // News Section
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Row(
@@ -200,8 +288,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ],
               ),
             ),
-
-            // News Carousel
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: CarouselSlider(
@@ -246,10 +332,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 options: CarouselOptions(
                   height: 150,
                   autoPlay: true,
-                  enlargeCenterPage: true,
+                  enlargeCenterPage: false,
+                  viewportFraction: 0.8,
                 ),
               ),
             ),
+            const SizedBox(height: 20),
           ],
         ),
       ),
@@ -261,10 +349,10 @@ class BottomCurveClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
     Path path = Path();
-    path.lineTo(0, size.height - 60);
+    path.lineTo(0, size.height - 60); // Start point adjusted for card overlap
 
     var controlPoint = Offset(size.width / 2, size.height);
-    var endPoint = Offset(size.width, size.height - 60);
+    var endPoint = Offset(size.width, size.height - 60); // End point adjusted
 
     path.quadraticBezierTo(
       controlPoint.dx,

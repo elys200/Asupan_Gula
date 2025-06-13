@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'hitung.dart'; // pastikan halaman ini ada
+import 'hitung.dart';
 
 class PerhitunganGulaPage extends StatefulWidget {
   const PerhitunganGulaPage({super.key});
@@ -13,14 +13,6 @@ class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
   String? selectedWaktuMakan = 'Makan Siang';
   DateTime selectedDate = DateTime.now();
   final makananList = [
-    {'nama': 'Telur Rebus', 'jumlah': '2 sedang'},
-    {'nama': 'Salad Sayur', 'jumlah': '1 mangkok'},
-    {'nama': 'Dada ayam', 'jumlah': '150 gram'},
-  ];
-  String? selectedWaktuMakan = 'Makan Siang';
-  DateTime selectedDate = DateTime.now();
-
-  final List<Map<String, String>> makananList = [
     {'nama': 'Telur Rebus', 'jumlah': '2 sedang'},
     {'nama': 'Salad Sayur', 'jumlah': '1 mangkok'},
     {'nama': 'Dada ayam', 'jumlah': '150 gram'},
@@ -105,9 +97,11 @@ class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           contentPadding: const EdgeInsets.all(24),
-          insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 100),
+          insetPadding:
+              const EdgeInsets.symmetric(horizontal: 24, vertical: 100),
           content: SizedBox(
             width: double.maxFinite,
             child: Column(
@@ -143,7 +137,8 @@ class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
                           Navigator.of(context).pop();
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (_) => const HitungPage()),
+                            MaterialPageRoute(
+                                builder: (_) => const HitungPage()),
                           );
                         },
                         style: ElevatedButton.styleFrom(
@@ -172,15 +167,12 @@ class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.redAccent,
-      backgroundColor: Colors.redAccent,
       appBar: AppBar(
         title: const Text('Perhitungan'),
         backgroundColor: Colors.redAccent,
         elevation: 0,
-        elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
           onPressed: () => Navigator.pop(context),
         ),
         actions: const [
@@ -307,7 +299,8 @@ class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
                         title: Text(item['nama']!),
                         subtitle: Text(item['jumlah']!),
                         trailing: IconButton(
-                          icon: const Icon(Icons.delete, color: Colors.redAccent),
+                          icon:
+                              const Icon(Icons.delete, color: Colors.redAccent),
                           onPressed: () => _hapusMakanan(index),
                         ),
                       ),
@@ -325,7 +318,8 @@ class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
                 onPressed: _showPopupDialog,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.redAccent,
-                  padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),

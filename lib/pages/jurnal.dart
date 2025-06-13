@@ -5,6 +5,7 @@ class JurnalPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    
     final List<Map<String, dynamic>> jurnalData = [
       {
         'tanggal': 'Senin, 10 April 2025',
