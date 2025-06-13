@@ -40,8 +40,7 @@ class SweetSense extends StatelessWidget {
         '/welcome': (context) => const WelcomeScreen(),
         '/register': (context) => const RegisterScreen(),
         '/login': (context) => const LoginScreen(),
-        '/perhitungan_gula':
-            (context) => const MainWithCurvedNav(initialIndex: 0),
+        '/perhitungan_gula': (context) => const MainWithCurvedNav(initialIndex: 0),
         '/dashboard': (context) => const MainWithCurvedNav(initialIndex: 1),
         '/profile': (context) => const MainWithCurvedNav(initialIndex: 2),
         '/edit_profile': (context) => const EditProfilePage(),
