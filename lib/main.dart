@@ -15,6 +15,11 @@ import 'package:sweetsense/pages/change_password.dart';
 import 'package:sweetsense/pages/favorite_recipe.dart';
 import 'package:sweetsense/pages/food.dart';
 import 'package:sweetsense/pages/news.dart';
+import 'package:sweetsense/pages/hitung.dart';
+import 'package:sweetsense/pages/jurnal.dart';
+
+
+
 
 
 
@@ -40,8 +45,7 @@ class SweetSense extends StatelessWidget {
         '/welcome': (context) => const WelcomeScreen(),
         '/register': (context) => const RegisterScreen(),
         '/login': (context) => const LoginScreen(),
-        '/perhitungan_gula':
-            (context) => const MainWithCurvedNav(initialIndex: 0),
+        '/perhitungan_gula': (context) => const MainWithCurvedNav(initialIndex: 0),
         '/dashboard': (context) => const MainWithCurvedNav(initialIndex: 1),
         '/profile': (context) => const MainWithCurvedNav(initialIndex: 2),
         '/edit_profile': (context) => const EditProfilePage(),
@@ -49,6 +53,10 @@ class SweetSense extends StatelessWidget {
         '/favorite_recipe': (context) => const FavoriteRecipe(),
         '/food': (context) => const FoodPage(),
         '/news': (context) => const NewsPage(),
+        '/hitung': (context) => const HitungPage(),
+        '/jurnal': (context) => const JurnalPage(),
+
+
 
       },
     );
