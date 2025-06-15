@@ -1,13 +1,11 @@
-// Nama File: profile.dart
-// Deskripsi: Halaman profil pengguna yang menampilkan informasi pengguna, opsi pengeditan profil, dan logout.
-// Dibuat oleh: Jihan Safinatunnaja - NIM: 3312301065
-// Tanggal: 6 May 2024
-
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:quickalert/quickalert.dart';
+import 'package:get/get.dart';
+import '../../controllers/authentication.dart';
+import '../../controllers/profile_controller.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -17,25 +15,36 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  File? _imageFile; // Menyimpan gambar profil yang dipilih dari galeri
-  final ImagePicker _picker =
-      ImagePicker(); // Untuk memilih gambar dari perangkat
+  final AuthenticationController _authController =
+      Get.find<AuthenticationController>();
+  final ProfileController _controller = Get.put(ProfileController());
+  final ImagePicker _picker = ImagePicker();
 
-  /// Memilih gambar dari galeri pengguna dan memperbarui state.
+  bool _isUploadingImage = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller.fetchProfile();
+  }
+
   Future<void> _pickImage() async {
     try {
-      final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+      final pickedFile = await _picker.pickImage(
+          source: ImageSource.gallery, imageQuality: 80);
       if (pickedFile != null) {
-        setState(() {
-          _imageFile = File(pickedFile.path);
-        });
+        setState(() => _isUploadingImage = true);
+        final file = File(pickedFile.path);
+        await _controller.setProfileImage(file);
       }
     } catch (e) {
       debugPrint('Gagal memilih gambar: $e');
+      Get.snackbar('Error', 'Gagal memilih gambar.\n$e');
+    } finally {
+      setState(() => _isUploadingImage = false);
     }
   }
 
-  /// Menampilkan dialog konfirmasi logout menggunakan QuickAlert.
   void _showExitQuickAlert() {
     QuickAlert.show(
       context: context,
@@ -46,14 +55,17 @@ class _ProfilePageState extends State<ProfilePage> {
       confirmBtnText: 'Yes',
       cancelBtnText: 'No',
       confirmBtnColor: Colors.red.shade800,
-      onConfirmBtnTap: () {
-        Navigator.of(
-          context,
-        ).pushNamedAndRemoveUntil('/welcome', (route) => false);
+      onConfirmBtnTap: () async {
+        Get.back();
+        try {
+          await _authController.logout();
+          Navigator.of(context)
+              .pushNamedAndRemoveUntil('/welcome', (route) => false);
+        } catch (e) {
+          Get.snackbar('Logout gagal', 'Terjadi kesalahan saat logout.\n$e');
+        }
       },
-      onCancelBtnTap: () {
-        Navigator.of(context).pop();
-      },
+      onCancelBtnTap: () => Navigator.of(context).pop(),
     );
   }
 
@@ -64,19 +76,23 @@ class _ProfilePageState extends State<ProfilePage> {
       appBar: _buildAppBar(),
       body: SafeArea(
         child: SingleChildScrollView(
-          child: Column(
-            children: [
-              _buildProfileHeader(),
-              const SizedBox(height: 16),
-              _buildMenuList(),
-            ],
-          ),
+          child: Obx(() => Column(
+                children: [
+                  _buildProfileHeader(),
+                  if (_isUploadingImage)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 10),
+                      child: CircularProgressIndicator(),
+                    ),
+                  const SizedBox(height: 16),
+                  _buildMenuList(),
+                ],
+              )),
         ),
       ),
     );
   }
 
-  /// Membuat AppBar dengan judul "Profile" dan tombol kembali.
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
       centerTitle: true,
@@ -105,8 +121,8 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  /// Membuat header profil dengan foto, nama, dan email.
   Widget _buildProfileHeader() {
+    final user = _controller.user.value;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.only(bottom: 20, top: 10),
@@ -119,7 +135,7 @@ class _ProfilePageState extends State<ProfilePage> {
         borderRadius: const BorderRadius.vertical(bottom: Radius.circular(30)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withAlpha(51), // 0.2 * 255 ≈ 51
+            color: Colors.black.withAlpha(51),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -128,18 +144,19 @@ class _ProfilePageState extends State<ProfilePage> {
       child: Center(
         child: Column(
           children: [
-            // Stack untuk menempatkan foto profil dan tombol kamera
             Stack(
               children: [
-                CircleAvatar(
-                  radius: 45,
-                  backgroundColor: Colors.white,
-                  backgroundImage:
-                      _imageFile != null
-                          ? FileImage(_imageFile!)
-                          : const AssetImage('assets/images/portrait.png')
-                              as ImageProvider,
-                ),
+                Obx(() => CircleAvatar(
+                      radius: 45,
+                      backgroundColor: Colors.white,
+                      backgroundImage: _controller.imageFile.value != null
+                          ? FileImage(_controller.imageFile.value!)
+                          : (user?.fotoUrl != null && user!.fotoUrl!.isNotEmpty
+                              ? NetworkImage(
+                                  '${user.fotoUrl}?v=${DateTime.now().millisecondsSinceEpoch}')
+                              : const AssetImage('assets/images/portrait.png')
+                                  as ImageProvider),
+                    )),
                 Positioned(
                   bottom: 0,
                   right: 4,
@@ -160,7 +177,7 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
             const SizedBox(height: 10),
             Text(
-              'Elys',
+              user?.username ?? 'Loading...',
               style: GoogleFonts.inter(
                 color: Colors.white,
                 fontSize: 16,
@@ -169,7 +186,7 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
             const SizedBox(height: 4),
             Text(
-              'elys132@gmail.com',
+              user?.email ?? '',
               style: GoogleFonts.inter(color: Colors.white70, fontSize: 13),
             ),
           ],
@@ -178,7 +195,6 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  /// Membuat daftar menu profil (Edit Profile, Ganti Password, dll).
   Widget _buildMenuList() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -213,7 +229,6 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  /// Membuat item menu individual dengan ikon dan judul.
   Widget _buildMenuItem({
     required IconData icon,
     required String title,
@@ -226,7 +241,6 @@ class _ProfilePageState extends State<ProfilePage> {
         padding: const EdgeInsets.symmetric(vertical: 6),
         child: Row(
           children: [
-            // Container untuk ikon dengan latar belakang bulat
             Container(
               padding: const EdgeInsets.all(8),
               decoration: const BoxDecoration(

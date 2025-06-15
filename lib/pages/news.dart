@@ -13,7 +13,8 @@ class NewsPage extends StatelessWidget {
       "title": "Studi: Diet Rendah Karbohidrat Efektif Turunkan dalam 3 Bulan",
       "date": "2024-08-15",
       "author": "Prof.Sarah Tanuwijaya, Ph.D",
-      "content": "Sebuah studi terbaru mengungkapkan bahwa diet rendah karbohidrat mampu menurunkan berat badan secara signifikan hanya dalam waktu tiga bulan. Dalam penelitian tersebut, peserta yang mengadopsi pola makan rendah karbohidrat mengalami penurunan berat badan yang lebih besar dibandingkan dengan mereka yang menjalani diet rendah lemak. Temuan ini memperkuat pandangan bahwa pengurangan asupan karbohidrat dapat menjadi metode yang efektif untuk mengatasi masalah berat badan dalam jangka pendek. Selain menurunkan berat badan, diet rendah karbohidrat juga menunjukkan dampak positif terhadap kesehatan metabolik. Studi mencatat adanya perbaikan pada kadar gula darah dan kolesterol peserta, yang mengindikasikan potensi manfaat lebih luas dari diet ini. Para peneliti pun menyimpulkan bahwa pola makan rendah karbohidrat bisa menjadi salah satu strategi yang layak dipertimbangkan untuk meningkatkan kesehatan secara keseluruhan, terutama bagi mereka yang memiliki masalah kelebihan berat badan atau gangguan metabolik.",
+      "content":
+          "Sebuah studi terbaru mengungkapkan bahwa diet rendah karbohidrat mampu menurunkan berat badan secara signifikan hanya dalam waktu tiga bulan. Dalam penelitian tersebut, peserta yang mengadopsi pola makan rendah karbohidrat mengalami penurunan berat badan yang lebih besar dibandingkan dengan mereka yang menjalani diet rendah lemak. Temuan ini memperkuat pandangan bahwa pengurangan asupan karbohidrat dapat menjadi metode yang efektif untuk mengatasi masalah berat badan dalam jangka pendek. Selain menurunkan berat badan, diet rendah karbohidrat juga menunjukkan dampak positif terhadap kesehatan metabolik. Studi mencatat adanya perbaikan pada kadar gula darah dan kolesterol peserta, yang mengindikasikan potensi manfaat lebih luas dari diet ini. Para peneliti pun menyimpulkan bahwa pola makan rendah karbohidrat bisa menjadi salah satu strategi yang layak dipertimbangkan untuk meningkatkan kesehatan secara keseluruhan, terutama bagi mereka yang memiliki masalah kelebihan berat badan atau gangguan metabolik.",
       "sourceTitle": "Health Magazine",
       "sourceImage": "assets/images/news1.png",
       "sourceUrl": "https://healthmagazine.com",
@@ -22,7 +23,8 @@ class NewsPage extends StatelessWidget {
       "title": "Manfaat Jalan Pagi untuk Kesehatan Jantung",
       "date": "2025-05-20",
       "author": "Dr. Fitri",
-      "content": "Jalan pagi secara rutin terbukti memberikan manfaat besar bagi kesehatan jantung. Aktivitas fisik ringan ini dapat membantu melancarkan peredaran darah, menurunkan tekanan darah, serta mengurangi kadar kolesterol jahat (LDL) dalam tubuh. Dengan berjalan kaki selama 30 menit setiap pagi, jantung bekerja lebih efisien dan risiko penyakit jantung seperti serangan jantung dan stroke dapat ditekan secara signifikan. Selain itu, jalan pagi juga dapat meningkatkan kualitas hidup secara keseluruhan. Aktivitas ini membantu mengurangi stres, meningkatkan suasana hati, dan menjaga berat badan tetap ideal—semua faktor yang turut mendukung kesehatan jantung. Para ahli kesehatan menyarankan untuk menjadikan jalan pagi sebagai bagian dari rutinitas harian, terutama bagi mereka yang ingin menjaga jantung tetap sehat tanpa harus melakukan olahraga berat.",
+      "content":
+          "Jalan pagi secara rutin terbukti memberikan manfaat besar bagi kesehatan jantung. Aktivitas fisik ringan ini dapat membantu melancarkan peredaran darah, menurunkan tekanan darah, serta mengurangi kadar kolesterol jahat (LDL) dalam tubuh. Dengan berjalan kaki selama 30 menit setiap pagi, jantung bekerja lebih efisien dan risiko penyakit jantung seperti serangan jantung dan stroke dapat ditekan secara signifikan. Selain itu, jalan pagi juga dapat meningkatkan kualitas hidup secara keseluruhan. Aktivitas ini membantu mengurangi stres, meningkatkan suasana hati, dan menjaga berat badan tetap ideal—semua faktor yang turut mendukung kesehatan jantung. Para ahli kesehatan menyarankan untuk menjadikan jalan pagi sebagai bagian dari rutinitas harian, terutama bagi mereka yang ingin menjaga jantung tetap sehat tanpa harus melakukan olahraga berat.",
       "sourceTitle": "Daily Health",
       "sourceImage": "assets/images/news1.png",
       "sourceUrl": "https://dailyhealth.com",
@@ -122,7 +124,8 @@ class NewsPage extends StatelessWidget {
             scrollDirection: Axis.horizontal,
             itemCount: newsList.length,
             separatorBuilder: (_, __) => const SizedBox(width: 12),
-            itemBuilder: (context, index) => buildBeritaCard(context, newsList[index]),
+            itemBuilder: (context, index) =>
+                buildBeritaCard(context, newsList[index]),
           ),
         ),
       ],
@@ -145,7 +148,8 @@ class NewsPage extends StatelessWidget {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
-                borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
+                borderRadius:
+                    BorderRadius.vertical(bottom: Radius.circular(24)),
               ),
               child: Row(
                 children: [
