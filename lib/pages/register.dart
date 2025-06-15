@@ -59,7 +59,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     SizedBox(height: screenHeight * 0.05),
-                    
+
                     // Title dengan responsive font
                     Text(
                       'Register',
@@ -255,7 +255,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
           return _authController.isLoading.value
               ? const Center(
                   child: CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFF5858)),
+                    valueColor:
+                        AlwaysStoppedAnimation<Color>(Color(0xFFFF5858)),
                   ),
                 )
               : ElevatedButton(

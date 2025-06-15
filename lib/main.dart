@@ -50,21 +50,31 @@ class SweetSense extends StatelessWidget {
       initialRoute: '/',
       getPages: [
         GetPage(name: '/', page: () => const LandingPage()),
-        GetPage(name: '/onboarding_screen', page: () => const OnboardingScreen()),
-        GetPage(name: '/onboarding_screen2', page: () => const OnboardingScreen2()),
-        GetPage(name: '/onboarding_screen3', page: () => const OnboardingScreen3()),
+        GetPage(
+            name: '/onboarding_screen', page: () => const OnboardingScreen()),
+        GetPage(
+            name: '/onboarding_screen2', page: () => const OnboardingScreen2()),
+        GetPage(
+            name: '/onboarding_screen3', page: () => const OnboardingScreen3()),
         GetPage(name: '/welcome', page: () => const WelcomeScreen()),
         GetPage(name: '/register', page: () => const RegisterScreen()),
         GetPage(name: '/login', page: () => const LoginScreen()),
 
         // Curved Navigation Pages
-        GetPage(name: '/perhitungan_gula', page: () => const MainWithCurvedNav(initialIndex: 0)),
-        GetPage(name: '/dashboard', page: () => const MainWithCurvedNav(initialIndex: 1)),
-        GetPage(name: '/profile', page: () => const MainWithCurvedNav(initialIndex: 2)),
+        GetPage(
+            name: '/perhitungan_gula',
+            page: () => const MainWithCurvedNav(initialIndex: 0)),
+        GetPage(
+            name: '/dashboard',
+            page: () => const MainWithCurvedNav(initialIndex: 1)),
+        GetPage(
+            name: '/profile',
+            page: () => const MainWithCurvedNav(initialIndex: 2)),
 
         // Other Pages
         GetPage(name: '/edit_profile', page: () => const EditProfilePage()),
-        GetPage(name: '/change_password', page: () => const ChangePasswordPage()),
+        GetPage(
+            name: '/change_password', page: () => const ChangePasswordPage()),
         GetPage(name: '/favorite_recipe', page: () => const FavoriteRecipe()),
         GetPage(name: '/food', page: () => const FoodPage()),
         GetPage(name: '/news', page: () => const NewsPage()),
@@ -72,7 +82,9 @@ class SweetSense extends StatelessWidget {
         GetPage(name: '/jurnal', page: () => const JurnalPage()),
 
         // With Argument
-        GetPage(name: '/food_detail', page: () => FoodDetailPage(food: Get.arguments)),
+        GetPage(
+            name: '/food_detail',
+            page: () => FoodDetailPage(food: Get.arguments)),
       ],
     );
   }

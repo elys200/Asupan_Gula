@@ -182,7 +182,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               children: [
                                 const Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         'Today Sugar',
@@ -195,7 +196,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                       SizedBox(height: 4),
                                       Text('Status',
                                           style: TextStyle(
-                                              fontSize: 16, color: Colors.grey)),
+                                              fontSize: 16,
+                                              color: Colors.grey)),
                                     ],
                                   ),
                                 ),
@@ -242,7 +244,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 child: const Text(
                                   'Jurnal',
                                   style: TextStyle(
-                                      fontSize: 16, fontWeight: FontWeight.bold),
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold),
                                 ),
                               ),
                             ),
@@ -264,7 +267,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   children: [
                     const Text(
                       "Food Recommendation",
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                     ),
                     TextButton(
                       onPressed: () {
@@ -345,7 +349,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   children: [
                     const Text(
                       "News",
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                     ),
                     TextButton(
                       onPressed: () {
