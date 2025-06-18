@@ -1,16 +1,13 @@
-// Nama File: edit_profile.dart
-// Deskripsi: Halaman untuk mengedit profil pengguna.
-// Dibuat oleh: Jihan Safinatunnaja - NIM: 3312301065
-// Tanggal: 6 May 2024
-
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:quickalert/quickalert.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../controllers/profile_controller.dart';
 
-/// Halaman untuk mengedit profil pengguna.
 class EditProfilePage extends StatefulWidget {
   const EditProfilePage({super.key});
 
@@ -20,9 +17,11 @@ class EditProfilePage extends StatefulWidget {
 
 class _EditProfilePageState extends State<EditProfilePage> {
   final ProfileController profileController = Get.find<ProfileController>();
+  final ImagePicker _picker = ImagePicker();
 
   File? _imageFile;
   bool _hasChanged = false;
+  bool _isUploadingImage = false;
 
   late final TextEditingController _nameController;
   late final TextEditingController _emailController;
@@ -50,6 +49,27 @@ class _EditProfilePageState extends State<EditProfilePage> {
     _emailController.addListener(_onTextChanged);
     _birthController.addListener(_onTextChanged);
     _weightController.addListener(_onTextChanged);
+  }
+
+  Future<void> _pickImage() async {
+    try {
+      final pickedFile = await _picker.pickImage(
+          source: ImageSource.gallery, imageQuality: 80);
+      if (pickedFile != null) {
+        setState(() {
+          _isUploadingImage = true;
+          _imageFile = File(pickedFile.path);
+          _hasChanged = true;
+        });
+      }
+    } catch (e) {
+      debugPrint('Gagal memilih gambar: $e');
+      Get.snackbar('Error', 'Gagal memilih gambar.\n$e');
+    } finally {
+      if (mounted) {
+        setState(() => _isUploadingImage = false);
+      }
+    }
   }
 
   void _onTextChanged() {
@@ -87,9 +107,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 children: [
                   const SizedBox(height: 16),
-                  _buildEditableField(_nameController, 'Nama Pengguna'),
+                  _buildEditableField(_nameController, 'Nama Pengguna',
+                      noSpaces: true),
                   _buildEditableField(_emailController, 'Email',
-                      keyboardType: TextInputType.emailAddress),
+                      keyboardType: TextInputType.emailAddress, noSpaces: true),
                   _buildEditableField(_birthController, 'Umur',
                       keyboardType: TextInputType.number),
                   _buildGenderDropdown(),
@@ -157,7 +178,51 @@ class _EditProfilePageState extends State<EditProfilePage> {
       child: Center(
         child: Column(
           children: [
-            _buildProfileImage(),
+            Stack(
+              children: [
+                _buildProfileImage(),
+                if (_isUploadingImage)
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.4),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Center(
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: GestureDetector(
+                    onTap: _pickImage,
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.2),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: const Icon(
+                        Icons.camera_alt,
+                        size: 18,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 40),
           ],
         ),
@@ -168,22 +233,34 @@ class _EditProfilePageState extends State<EditProfilePage> {
   Widget _buildProfileImage() {
     final user = profileController.user.value;
 
-    ImageProvider<Object> imageProvider;
-
     if (_imageFile != null) {
-      imageProvider = FileImage(_imageFile!);
-    } else if (user?.fotoUrl != null && user!.fotoUrl!.isNotEmpty) {
-      imageProvider = NetworkImage(
-        '${user.fotoUrl}?v=${DateTime.now().millisecondsSinceEpoch}',
+      return CircleAvatar(
+        radius: 45,
+        backgroundColor: Colors.white,
+        backgroundImage: FileImage(_imageFile!),
       );
-    } else {
-      imageProvider = const AssetImage('assets/images/portrait.png');
+    } else if (user?.fotoUrl != null && user!.fotoUrl!.isNotEmpty) {
+      return CachedNetworkImage(
+        imageUrl: user.fotoUrl!,
+        imageBuilder: (context, imageProvider) => CircleAvatar(
+          radius: 45,
+          backgroundColor: Colors.white,
+          backgroundImage: imageProvider,
+        ),
+        placeholder: (context, url) => _buildAvatarPlaceholder(),
+        errorWidget: (context, url, error) => _buildAvatarPlaceholder(),
+        memCacheHeight: 200,
+        memCacheWidth: 200,
+      );
     }
+    return _buildAvatarPlaceholder();
+  }
 
+  Widget _buildAvatarPlaceholder() {
     return CircleAvatar(
       radius: 45,
       backgroundColor: Colors.white,
-      backgroundImage: imageProvider,
+      child: Icon(Icons.person, size: 40, color: Colors.grey),
     );
   }
 
@@ -191,12 +268,19 @@ class _EditProfilePageState extends State<EditProfilePage> {
     TextEditingController controller,
     String label, {
     TextInputType keyboardType = TextInputType.text,
+    bool noSpaces = false,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: TextField(
         controller: controller,
         keyboardType: keyboardType,
+        inputFormatters: noSpaces
+            ? [
+                FilteringTextInputFormatter.deny(
+                    RegExp(r'\s')), // Blokir semua spasi
+              ]
+            : null,
         style: GoogleFonts.poppins(fontSize: 15),
         decoration: InputDecoration(
           labelText: label,
@@ -288,6 +372,69 @@ class _EditProfilePageState extends State<EditProfilePage> {
     final String birthStr = _birthController.text.trim();
     final String weightStr = _weightController.text.trim();
 
+    // Validasi tambahan untuk memastikan tidak ada spasi yang lolos
+    if (name.contains(' ')) {
+      QuickAlert.show(
+        context: context,
+        type: QuickAlertType.error,
+        title: 'Input Tidak Valid',
+        text: 'Nama pengguna tidak boleh mengandung spasi.',
+        confirmBtnText: 'OK',
+        confirmBtnColor: const Color(0xFFFF4A4A),
+      );
+      return;
+    }
+
+    if (email.contains(' ')) {
+      QuickAlert.show(
+        context: context,
+        type: QuickAlertType.error,
+        title: 'Input Tidak Valid',
+        text: 'Email tidak boleh mengandung spasi.',
+        confirmBtnText: 'OK',
+        confirmBtnColor: const Color(0xFFFF4A4A),
+      );
+      return;
+    }
+
+    // Validasi field kosong
+    if (name.isEmpty) {
+      QuickAlert.show(
+        context: context,
+        type: QuickAlertType.error,
+        title: 'Input Tidak Valid',
+        text: 'Nama pengguna tidak boleh kosong.',
+        confirmBtnText: 'OK',
+        confirmBtnColor: const Color(0xFFFF4A4A),
+      );
+      return;
+    }
+
+    if (email.isEmpty) {
+      QuickAlert.show(
+        context: context,
+        type: QuickAlertType.error,
+        title: 'Input Tidak Valid',
+        text: 'Email tidak boleh kosong.',
+        confirmBtnText: 'OK',
+        confirmBtnColor: const Color(0xFFFF4A4A),
+      );
+      return;
+    }
+
+    // Validasi format email
+    if (!RegExp(r'^[^@]+@[^@]+\.[^@]+$').hasMatch(email)) {
+      QuickAlert.show(
+        context: context,
+        type: QuickAlertType.error,
+        title: 'Input Tidak Valid',
+        text: 'Format email tidak valid.',
+        confirmBtnText: 'OK',
+        confirmBtnColor: const Color(0xFFFF4A4A),
+      );
+      return;
+    }
+
     int? umur = int.tryParse(birthStr);
     double? berat = double.tryParse(weightStr);
 
@@ -296,6 +443,30 @@ class _EditProfilePageState extends State<EditProfilePage> {
         context: context,
         type: QuickAlertType.error,
         text: 'Umur dan berat badan harus berupa angka.',
+        confirmBtnText: 'OK',
+        confirmBtnColor: const Color(0xFFFF4A4A),
+      );
+      return;
+    }
+
+    if (umur <= 0 || umur > 150) {
+      QuickAlert.show(
+        context: context,
+        type: QuickAlertType.error,
+        title: 'Input Tidak Valid',
+        text: 'Umur harus antara 1-150 tahun.',
+        confirmBtnText: 'OK',
+        confirmBtnColor: const Color(0xFFFF4A4A),
+      );
+      return;
+    }
+
+    if (berat <= 0 || berat > 500) {
+      QuickAlert.show(
+        context: context,
+        type: QuickAlertType.error,
+        title: 'Input Tidak Valid',
+        text: 'Berat badan harus antara 1-500 kg.',
         confirmBtnText: 'OK',
         confirmBtnColor: const Color(0xFFFF4A4A),
       );
@@ -311,6 +482,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
         jenisKelamin: _genderValue,
         umur: umur,
         beratBadan: berat,
+        imageFile: _imageFile,
       );
 
       if (!mounted) return;

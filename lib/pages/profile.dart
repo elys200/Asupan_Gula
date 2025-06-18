@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:quickalert/quickalert.dart';
 import 'package:get/get.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../controllers/authentication.dart';
 import '../../controllers/profile_controller.dart';
 
@@ -14,13 +15,17 @@ class ProfilePage extends StatefulWidget {
   State<ProfilePage> createState() => _ProfilePageState();
 }
 
-class _ProfilePageState extends State<ProfilePage> {
+class _ProfilePageState extends State<ProfilePage>
+    with AutomaticKeepAliveClientMixin {
   final AuthenticationController _authController =
       Get.find<AuthenticationController>();
   final ProfileController _controller = Get.put(ProfileController());
   final ImagePicker _picker = ImagePicker();
 
   bool _isUploadingImage = false;
+
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
@@ -41,7 +46,9 @@ class _ProfilePageState extends State<ProfilePage> {
       debugPrint('Gagal memilih gambar: $e');
       Get.snackbar('Error', 'Gagal memilih gambar.\n$e');
     } finally {
-      setState(() => _isUploadingImage = false);
+      if (mounted) {
+        setState(() => _isUploadingImage = false);
+      }
     }
   }
 
@@ -71,6 +78,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: _buildAppBar(),
@@ -146,17 +154,31 @@ class _ProfilePageState extends State<ProfilePage> {
           children: [
             Stack(
               children: [
-                Obx(() => CircleAvatar(
+                Obx(() {
+                  if (_controller.imageFile.value != null) {
+                    return CircleAvatar(
                       radius: 45,
                       backgroundColor: Colors.white,
-                      backgroundImage: _controller.imageFile.value != null
-                          ? FileImage(_controller.imageFile.value!)
-                          : (user?.fotoUrl != null && user!.fotoUrl!.isNotEmpty
-                              ? NetworkImage(
-                                  '${user.fotoUrl}?v=${DateTime.now().millisecondsSinceEpoch}')
-                              : const AssetImage('assets/images/portrait.png')
-                                  as ImageProvider),
-                    )),
+                      backgroundImage: FileImage(_controller.imageFile.value!),
+                    );
+                  } else if (user?.fotoUrl != null &&
+                      user!.fotoUrl!.isNotEmpty) {
+                    return CachedNetworkImage(
+                      imageUrl: user.fotoUrl!,
+                      imageBuilder: (context, imageProvider) => CircleAvatar(
+                        radius: 45,
+                        backgroundColor: Colors.white,
+                        backgroundImage: imageProvider,
+                      ),
+                      placeholder: (context, url) => _buildAvatarPlaceholder(),
+                      errorWidget: (context, url, error) =>
+                          _buildAvatarPlaceholder(),
+                      memCacheHeight: 200,
+                      memCacheWidth: 200,
+                    );
+                  }
+                  return _buildAvatarPlaceholder();
+                }),
                 Positioned(
                   bottom: 0,
                   right: 4,
@@ -192,6 +214,14 @@ class _ProfilePageState extends State<ProfilePage> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildAvatarPlaceholder() {
+    return CircleAvatar(
+      radius: 45,
+      backgroundColor: Colors.white,
+      child: Icon(Icons.person, size: 40, color: Colors.grey),
     );
   }
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../controllers/favorite_recipe_controller.dart';
+import '../controllers/profile_controller.dart';
 import '../models/food_model.dart';
 import 'food_detail.dart';
 
@@ -13,14 +14,15 @@ class FavoriteRecipe extends StatefulWidget {
 }
 
 class _FavoriteRecipeState extends State<FavoriteRecipe> {
-  final FavoriteRecipeController favoriteController =
-      Get.put(FavoriteRecipeController());
+  final favoriteController = Get.put(FavoriteRecipeController());
+  final profileController = Get.put(ProfileController());
   String searchQuery = "";
 
   @override
   void initState() {
     super.initState();
     _initFavorites();
+    profileController.fetchProfile();
   }
 
   Future<void> _initFavorites() async {
@@ -56,47 +58,55 @@ class _FavoriteRecipeState extends State<FavoriteRecipe> {
   }
 
   Widget _buildHeader(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.fromLTRB(
-        20,
-        MediaQuery.of(context).padding.top + 20,
-        20,
-        20,
-      ),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFFE43A15), Color(0xFFE65245)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+    return Obx(() {
+      final user = profileController.user.value;
+      return Container(
+        padding: EdgeInsets.fromLTRB(
+          20,
+          MediaQuery.of(context).padding.top + 20,
+          20,
+          20,
         ),
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(30),
-          bottomRight: Radius.circular(30),
-        ),
-      ),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () => Navigator.pop(context),
-            child: const Icon(Icons.arrow_back, color: Colors.white),
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFFE43A15), Color(0xFFE65245)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
-          const SizedBox(width: 10),
-          const Text(
-            "Hi Elys",
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
+          borderRadius: BorderRadius.only(
+            bottomLeft: Radius.circular(30),
+            bottomRight: Radius.circular(30),
+          ),
+        ),
+        child: Row(
+          children: [
+            GestureDetector(
+              onTap: () => Navigator.pop(context),
+              child: const Icon(Icons.arrow_back, color: Colors.white),
             ),
-          ),
-          const Spacer(),
-          const CircleAvatar(
-            backgroundImage: AssetImage('assets/images/portrait.png'),
-            radius: 18,
-          ),
-        ],
-      ),
-    );
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                "Hi, ${user?.username ?? 'User'}",
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            CircleAvatar(
+              backgroundImage:
+                  user?.fotoUrl != null && user!.fotoUrl!.isNotEmpty
+                      ? NetworkImage(user.fotoUrl!)
+                      : const AssetImage('assets/images/portrait.png')
+                          as ImageProvider,
+              radius: 18,
+            ),
+          ],
+        ),
+      );
+    });
   }
 
   Widget _buildSearchField() {
