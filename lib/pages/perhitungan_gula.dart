@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:intl/intl.dart';
-import 'hitung.dart';
+import 'jurnal.dart';
+import 'openfood_api.dart';
 
 class PerhitunganGulaPage extends StatefulWidget {
   const PerhitunganGulaPage({super.key});
@@ -10,12 +12,13 @@ class PerhitunganGulaPage extends StatefulWidget {
 }
 
 class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
-  String? selectedWaktuMakan = 'Makan Siang';
+  String selectedWaktuMakan = 'Makan Siang';
   DateTime selectedDate = DateTime.now();
-  final makananList = [
-    {'nama': 'Telur Rebus', 'jumlah': '2 sedang'},
-    {'nama': 'Salad Sayur', 'jumlah': '1 mangkok'},
-    {'nama': 'Dada ayam', 'jumlah': '150 gram'},
+
+  final List<Map<String, dynamic>> makananList = [
+    {'nama': 'Telur Rebus', 'jumlah': '2 sedang', 'kalori': 155.0, 'gula': 1.1},
+    {'nama': 'Salad Sayur', 'jumlah': '1 mangkok', 'kalori': 80.0, 'gula': 3.5},
+    {'nama': 'Dada ayam', 'jumlah': '150 gram', 'kalori': 165.0, 'gula': 0.0},
   ];
 
   final waktuMakanOptions = [
@@ -25,6 +28,26 @@ class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
     'Sarapan',
     'Minuman',
     'Lainnya',
+  ];
+
+  final List<String> _makananSuggestions = [
+    'Nasi Putih',
+    'Nasi Goreng',
+    'Telur Rebus',
+    'Telur Dadar',
+    'Dada Ayam',
+    'Sate Ayam',
+    'Rendang',
+    'Gado-gado',
+    'Salad Sayur',
+    'Bakso',
+    'Soto Ayam',
+    'Roti Tawar',
+    'Apel',
+    'Pisang',
+    'Jeruk',
+    'Teh Manis',
+    'Kopi Hitam',
   ];
 
   void _selectDate() async {
@@ -43,8 +66,8 @@ class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
   }
 
   void _tambahMakanan() {
-    String namaMakanan = '';
     String jumlahMakanan = '';
+    final TextEditingController typeAheadController = TextEditingController();
 
     showDialog(
       context: context,
@@ -54,10 +77,29 @@ class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextField(
-                decoration: const InputDecoration(labelText: 'Nama Makanan'),
-                onChanged: (value) => namaMakanan = value,
+              TypeAheadField<String>(
+                textFieldConfiguration: TextFieldConfiguration(
+                  controller: typeAheadController,
+                  decoration: const InputDecoration(labelText: 'Nama Makanan'),
+                ),
+                suggestionsCallback: (pattern) {
+                  return _makananSuggestions
+                      .where((item) =>
+                          item.toLowerCase().contains(pattern.toLowerCase()))
+                      .toList();
+                },
+                itemBuilder: (context, suggestion) {
+                  return ListTile(title: Text(suggestion));
+                },
+                onSuggestionSelected: (suggestion) {
+                  typeAheadController.text = suggestion;
+                },
+                noItemsFoundBuilder: (context) => const Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: Text('Makanan tidak ditemukan.'),
+                ),
               ),
+              const SizedBox(height: 10),
               TextField(
                 decoration: const InputDecoration(labelText: 'Jumlah'),
                 onChanged: (value) => jumlahMakanan = value,
@@ -70,20 +112,57 @@ class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
               child: const Text('Batal'),
             ),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
+                final String namaMakanan = typeAheadController.text.trim();
                 if (namaMakanan.isNotEmpty && jumlahMakanan.isNotEmpty) {
+                  Navigator.pop(context);
+
+                  final hasil =
+                      await OpenFoodFactsAPI.fetchNutrisiMakanan(namaMakanan);
+
                   setState(() {
                     makananList.add({
                       'nama': namaMakanan,
                       'jumlah': jumlahMakanan,
+                      'kalori': hasil?.kalori ?? 0.0,
+                      'gula': hasil?.gula ?? 0.0,
                     });
                   });
-                  Navigator.pop(context);
+
+                  if (hasil != null) {
+                    showDialog(
+                      context: context,
+                      builder: (_) => AlertDialog(
+                        title: Text('Info Nutrisi: ${hasil.nama}'),
+                        content: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Kalori: ${hasil.kalori} kkal'),
+                            Text('Gula: ${hasil.gula} gram'),
+                            Text('Protein: ${hasil.protein} gram'),
+                            Text('Lemak: ${hasil.lemak} gram'),
+                            Text('Karbohidrat: ${hasil.karbohidrat} gram'),
+                          ],
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('Tutup'),
+                          ),
+                        ],
+                      ),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                          content: Text('Data nutrisi tidak ditemukan')),
+                    );
+                  }
                 }
               },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.redAccent,
-              ),
+              style:
+                  ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
               child: const Text('Tambah'),
             ),
           ],
@@ -108,15 +187,16 @@ class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Data Perhitungan',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
+                const Text('Data Perhitungan',
+                    style:
+                        TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 16),
                 Text('Waktu Makan: $selectedWaktuMakan'),
                 const SizedBox(height: 8),
-                const Text('Total Kalori: 450 kkal'),
-                const Text('Estimasi Gula: 2,5 gram'),
+                Text(
+                    'Total Kalori: ${getTotalKalori().toStringAsFixed(1)} kkal'),
+                Text(
+                    'Estimasi Gula: ${getTotalGula().toStringAsFixed(1)} gram'),
                 const SizedBox(height: 20),
                 const Divider(),
                 const SizedBox(height: 10),
@@ -138,12 +218,11 @@ class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                                builder: (_) => const HitungPage()),
+                                builder: (_) => const JurnalPage()),
                           );
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.redAccent,
-                        ),
+                            backgroundColor: Colors.redAccent),
                         child: const Text('Lanjut'),
                       ),
                     ),
@@ -163,6 +242,14 @@ class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
     });
   }
 
+  double getTotalKalori() {
+    return makananList.fold(0.0, (sum, item) => sum + (item['kalori'] ?? 0.0));
+  }
+
+  double getTotalGula() {
+    return makananList.fold(0.0, (sum, item) => sum + (item['gula'] ?? 0.0));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -179,7 +266,7 @@ class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
           Padding(
             padding: EdgeInsets.only(right: 10.0),
             child: CircleAvatar(
-              backgroundImage: AssetImage('assets/portrait.png'),
+              backgroundImage: AssetImage('assets/images/portrait.png'),
             ),
           ),
         ],
@@ -214,12 +301,9 @@ class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),
-
-            // Date Picker
             Card(
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
+                  borderRadius: BorderRadius.circular(12)),
               elevation: 2,
               child: ListTile(
                 title: const Text('Time'),
@@ -229,11 +313,8 @@ class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
               ),
             ),
             const SizedBox(height: 20),
-
             const Text('Pilih waktu makan'),
             const SizedBox(height: 10),
-
-            // Pilihan waktu makan
             GridView.count(
               crossAxisCount: 3,
               shrinkWrap: true,
@@ -265,17 +346,14 @@ class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
                 );
               }).toList(),
             ),
-
             const SizedBox(height: 20),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  selectedWaktuMakan ?? '',
+                  selectedWaktuMakan,
                   style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
+                      fontWeight: FontWeight.bold, fontSize: 16),
                 ),
                 IconButton(
                   icon: const Icon(Icons.add, color: Colors.redAccent),
@@ -283,12 +361,10 @@ class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
                 ),
               ],
             ),
-
             Card(
               elevation: 2,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
+                  borderRadius: BorderRadius.circular(12)),
               child: Column(
                 children: makananList.asMap().entries.map((entry) {
                   final index = entry.key;
@@ -297,7 +373,9 @@ class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
                     children: [
                       ListTile(
                         title: Text(item['nama']!),
-                        subtitle: Text(item['jumlah']!),
+                        subtitle: Text(
+                          '${item['jumlah']} - ${item['kalori']?.toStringAsFixed(1)} kkal, ${item['gula']?.toStringAsFixed(1)} g gula',
+                        ),
                         trailing: IconButton(
                           icon:
                               const Icon(Icons.delete, color: Colors.redAccent),
@@ -311,7 +389,6 @@ class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
                 }).toList(),
               ),
             ),
-
             const SizedBox(height: 30),
             Center(
               child: ElevatedButton(
@@ -321,8 +398,7 @@ class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                      borderRadius: BorderRadius.circular(12)),
                 ),
                 child: const Text('Hitung'),
               ),

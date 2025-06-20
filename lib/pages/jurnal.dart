@@ -5,7 +5,6 @@ class JurnalPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    
     final List<Map<String, dynamic>> jurnalData = [
       {
         'tanggal': 'Senin, 10 April 2025',
@@ -61,18 +60,6 @@ class JurnalPage extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: Colors.white,
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Colors.white,
-        selectedItemColor: Colors.red,
-        unselectedItemColor: Colors.grey,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.grid_view), label: ''),
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: ''),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: ''),
-        ],
-        currentIndex: 1,
-        onTap: (index) {},
-      ),
       body: Column(
         children: [
           Container(
