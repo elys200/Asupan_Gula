@@ -70,7 +70,7 @@ class ProfileController extends GetxController {
     String? email,
     String? jenisKelamin,
     int? umur,
-    double? beratBadan,
+    double? beratBadan, File? imageFile,
   }) async {
     final token = _auth.token.value;
     if (token == null) {
@@ -189,4 +189,6 @@ class ProfileController extends GetxController {
       Get.snackbar('Error', 'Gagal menghubungi server.\n$e');
     }
   }
+
+  void refreshProfile() {}
 }

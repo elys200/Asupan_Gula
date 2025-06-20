@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+
 import 'food_detail.dart';
 import '../controllers/food_controller.dart';
 import '../controllers/favorite_recipe_controller.dart';
+import '../controllers/profile_controller.dart';
 import '../models/food_model.dart';
 
 void main() {
@@ -40,6 +43,8 @@ class FoodPage extends StatefulWidget {
 
 class _FoodPageState extends State<FoodPage> {
   final favoriteController = Get.put(FavoriteRecipeController());
+  final profileController = Get.put(ProfileController());
+
   List<FoodModel> foodList = [];
   String searchQuery = "";
   bool isLoading = true;
@@ -49,18 +54,15 @@ class _FoodPageState extends State<FoodPage> {
     super.initState();
     _initFavorites();
     fetchFoods();
+    profileController.fetchProfile();
   }
 
   Future<void> _initFavorites() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
-
     if (token != null) {
       favoriteController.setToken(token);
       favoriteController.fetchFavorites();
-    } else {
-      // Handle jika token tidak ada (opsional)
-      print("Token tidak ditemukan. Pastikan user sudah login.");
     }
   }
 
@@ -84,7 +86,6 @@ class _FoodPageState extends State<FoodPage> {
     return Scaffold(
       backgroundColor: Colors.white,
       extendBodyBehindAppBar: true,
-      extendBody: true,
       body: SafeArea(
         top: false,
         bottom: false,
@@ -105,8 +106,10 @@ class _FoodPageState extends State<FoodPage> {
                           crossAxisSpacing: 12,
                           childAspectRatio: 0.9,
                         ),
-                        itemBuilder: (context, index) =>
-                            FoodCard(food: filteredFoodList[index]),
+                        itemBuilder: (context, index) => FoodCard(
+                          food: filteredFoodList[index],
+                          favoriteController: favoriteController,
+                        ),
                       ),
                     ),
             ),
@@ -117,53 +120,70 @@ class _FoodPageState extends State<FoodPage> {
   }
 
   Widget _buildHeader(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.fromLTRB(
-          20, MediaQuery.of(context).padding.top + 20, 20, 20),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFFE43A15), Color(0xFFE65245)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+    return Obx(() {
+      final user = profileController.user.value;
+      return Container(
+        padding: EdgeInsets.fromLTRB(
+            20, MediaQuery.of(context).padding.top + 20, 20, 20),
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFFE43A15), Color(0xFFE65245)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.only(
+            bottomLeft: Radius.circular(30),
+            bottomRight: Radius.circular(30),
+          ),
         ),
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(30),
-          bottomRight: Radius.circular(30),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              GestureDetector(
-                onTap: () => Navigator.pop(context),
-                child: const Icon(Icons.arrow_back, color: Colors.white),
-              ),
-              const SizedBox(width: 10),
-              const Text("Hi Mia",
-                  style: TextStyle(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: const Icon(Icons.arrow_back, color: Colors.white),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    "Hi, ${user?.username ?? 'User'}",
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 18,
-                      fontWeight: FontWeight.bold)),
-              const Spacer(),
-              const CircleAvatar(
-                backgroundImage: AssetImage('assets/images/portrait.png'),
-                radius: 18,
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          const Text("Find your food",
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                user?.fotoUrl != null && user!.fotoUrl!.isNotEmpty
+                    ? CircleAvatar(
+                        radius: 18,
+                        backgroundImage:
+                            CachedNetworkImageProvider(user.fotoUrl!),
+                      )
+                    : const CircleAvatar(
+                        radius: 18,
+                        backgroundImage:
+                            AssetImage('assets/images/portrait.png'),
+                      ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              "Find your food",
               style: TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white)),
-          const SizedBox(height: 20),
-          _buildSearchField(),
-        ],
-      ),
-    );
+                fontSize: 26,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 20),
+            _buildSearchField(),
+          ],
+        ),
+      );
+    });
   }
 
   Widget _buildSearchField() {
@@ -188,12 +208,16 @@ class _FoodPageState extends State<FoodPage> {
 
 class FoodCard extends StatelessWidget {
   final FoodModel food;
-  const FoodCard({super.key, required this.food});
+  final FavoriteRecipeController favoriteController;
+
+  const FoodCard({
+    super.key,
+    required this.food,
+    required this.favoriteController,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final FavoriteRecipeController favoriteController = Get.find();
-
     return Stack(
       children: [
         Container(
@@ -210,42 +234,66 @@ class FoodCard extends StatelessWidget {
                     const BorderRadius.vertical(top: Radius.circular(15)),
                 child: Image.network(
                   food.fotoUrl ?? 'https://via.placeholder.com/150',
-                  height: 110,
+                  height: 100,
                   width: double.infinity,
                   fit: BoxFit.cover,
                 ),
               ),
+              const SizedBox(height: 6),
               Padding(
-                padding: const EdgeInsets.only(left: 10, top: 8, right: 10),
-                child: Text(food.nama,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 12)),
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Text(
+                  food.nama,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                ),
               ),
+              const Spacer(),
               Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text("${food.totalKalori?.toStringAsFixed(0) ?? '0'} kcal",
-                        style:
-                            const TextStyle(color: Colors.grey, fontSize: 12)),
-                    GestureDetector(
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (_) => FoodDetailPage(food: food)),
-                      ),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFE43A15),
-                          borderRadius: BorderRadius.circular(12),
+                    Expanded(
+                      child: Text(
+                        "${food.totalKalori?.toStringAsFixed(0) ?? '0'} kcal",
+                        style: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 11,
                         ),
-                        child: const Text("More Detail",
-                            style:
-                                TextStyle(color: Colors.white, fontSize: 10)),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => FoodDetailPage(food: food),
+                            ),
+                          );
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE43A15),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Text(
+                            "More Detail",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   ],
@@ -270,7 +318,7 @@ class FoodCard extends StatelessWidget {
                 child: Icon(
                   isFavorited ? Icons.star : Icons.star_border,
                   color: isFavorited ? Colors.amber : Colors.grey,
-                  size: 24,
+                  size: 22,
                 ),
               ),
             );

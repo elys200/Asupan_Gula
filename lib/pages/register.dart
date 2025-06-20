@@ -10,7 +10,7 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
-  // Controllers untuk backend
+  // Controllers
   final _usernameController = TextEditingController();
   final _emailController = TextEditingController();
   final _umurController = TextEditingController();
@@ -59,7 +59,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     SizedBox(height: screenHeight * 0.05),
-                    
+
                     // Title dengan responsive font
                     Text(
                       'Register',
@@ -73,7 +73,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     // Username Field
                     CustomTextField(
                       controller: _usernameController,
-                      hint: 'Username',
+                      hint: 'Nama Pengguna',
                     ),
                     SizedBox(height: screenHeight * 0.025),
 
@@ -129,7 +129,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
           ),
 
-          // Tombol Kembali (Frontend Baru)
+          // Tombol Kembali
           Positioned(
             top: MediaQuery.of(context).padding.top + 8,
             left: 16,
@@ -166,7 +166,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       child: ClipPath(
         clipper: TopCurveClipper(),
         child: Container(
-          height: screenHeight * 0.15, // Responsive height
+          height: screenHeight * 0.15,
           decoration: const BoxDecoration(
             gradient: LinearGradient(
               colors: [Color(0xFFE43A15), Color(0xFFE65245)],
@@ -196,7 +196,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       child: ClipPath(
         clipper: BottomCurveClipper(),
         child: Container(
-          height: screenHeight * 0.2, // Responsive height
+          height: screenHeight * 0.2,
           decoration: const BoxDecoration(
             gradient: LinearGradient(
               colors: [Color(0xFFE43A15), Color(0xFFE65245)],
@@ -249,13 +249,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget _buildRegisterButton(double screenWidth, double screenHeight) {
     return Center(
       child: SizedBox(
-        width: screenWidth * 0.5, // Responsive width
-        height: screenHeight * 0.06, // Responsive height
+        width: screenWidth * 0.5,
+        height: screenHeight * 0.06,
         child: Obx(() {
           return _authController.isLoading.value
               ? const Center(
                   child: CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFF5858)),
+                    valueColor:
+                        AlwaysStoppedAnimation<Color>(Color(0xFFFF5858)),
                   ),
                 )
               : ElevatedButton(
@@ -281,7 +282,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  // Backend Logic - Tetap dipertahankan
+  // Backend Logic
   Future<void> _onRegisterPressed() async {
     final username = _usernameController.text.trim();
     final email = _emailController.text.trim();
@@ -359,7 +360,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 }
 
-// Custom Text Field Widget - Responsive dengan Backend Integration
+// Custom Text Field Widget
 class CustomTextField extends StatelessWidget {
   final String hint;
   final bool obscureText;
@@ -408,7 +409,7 @@ class CustomTextField extends StatelessWidget {
   }
 }
 
-// Clippers tetap sama
+// Clippers
 class TopCurveClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
