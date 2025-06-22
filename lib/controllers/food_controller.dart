@@ -6,13 +6,13 @@ import '../models/food_model.dart';
 class FoodController {
   // Mendapatkan semua resep makanan
   static Future<List<FoodModel>> getAllFoods() async {
-    final uri = Uri.parse('${url}resep');
+    final uri = Uri.parse('${url}resep-all');
     final response = await http.get(uri);
 
     if (response.statusCode == 200) {
-      final List<dynamic> jsonList = jsonDecode(response.body);
+      final List<dynamic> dataList = jsonDecode(response.body);
 
-      return jsonList.map((json) => FoodModel.fromJson(json)).toList();
+      return dataList.map((jsonItem) => FoodModel.fromJson(jsonItem)).toList();
     } else {
       throw Exception('Gagal memuat daftar resep makanan');
     }

@@ -312,11 +312,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 fit: BoxFit.cover,
                                 width: double.infinity,
                                 errorBuilder: (context, error, stackTrace) =>
-                                    Image.asset('assets/images/placeholder.png',
-                                        fit: BoxFit.cover),
+                                    Center(
+                                  child: Icon(Icons.broken_image,
+                                      size: 40, color: Colors.grey),
+                                ),
                               )
                             : Image.asset(
-                                'assets/images/placeholder.png',
+                                'assets/images/food_placeholder.png',
                                 fit: BoxFit.cover,
                                 width: double.infinity,
                               ),
@@ -391,21 +393,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     newsItem.fotoUrl!,
                                     fit: BoxFit.cover,
                                     width: double.infinity,
-                                    height: 150,
                                     errorBuilder:
                                         (context, error, stackTrace) =>
-                                            Image.asset(
-                                      'assets/images/placeholder.png',
-                                      fit: BoxFit.cover,
-                                      width: double.infinity,
-                                      height: 150,
+                                            const Icon(
+                                      Icons.broken_image,
+                                      size: 40,
+                                      color: Colors.grey,
                                     ),
                                   )
                                 : Image.asset(
-                                    'assets/images/placeholder.png',
+                                    'assets/images/news_placeholder.png',
                                     fit: BoxFit.cover,
                                     width: double.infinity,
-                                    height: 150,
                                   ),
                           ),
                           Positioned(
