@@ -5,7 +5,6 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:quickalert/quickalert.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:image_picker/image_picker.dart';
 import '../../controllers/profile_controller.dart';
 
 class EditProfilePage extends StatefulWidget {
@@ -17,7 +16,6 @@ class EditProfilePage extends StatefulWidget {
 
 class _EditProfilePageState extends State<EditProfilePage> {
   final ProfileController profileController = Get.find<ProfileController>();
-  final ImagePicker _picker = ImagePicker();
 
   File? _imageFile;
   bool _hasChanged = false;
@@ -49,27 +47,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
     _emailController.addListener(_onTextChanged);
     _birthController.addListener(_onTextChanged);
     _weightController.addListener(_onTextChanged);
-  }
-
-  Future<void> _pickImage() async {
-    try {
-      final pickedFile = await _picker.pickImage(
-          source: ImageSource.gallery, imageQuality: 80);
-      if (pickedFile != null) {
-        setState(() {
-          _isUploadingImage = true;
-          _imageFile = File(pickedFile.path);
-          _hasChanged = true;
-        });
-      }
-    } catch (e) {
-      debugPrint('Gagal memilih gambar: $e');
-      Get.snackbar('Error', 'Gagal memilih gambar.\n$e');
-    } finally {
-      if (mounted) {
-        setState(() => _isUploadingImage = false);
-      }
-    }
   }
 
   void _onTextChanged() {
@@ -195,32 +172,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
                       ),
                     ),
                   ),
-                Positioned(
-                  bottom: 0,
-                  right: 0,
-                  child: GestureDetector(
-                    onTap: _pickImage,
-                    child: Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: const Icon(
-                        Icons.camera_alt,
-                        size: 18,
-                        color: Colors.grey,
-                      ),
-                    ),
-                  ),
-                ),
               ],
             ),
             const SizedBox(height: 40),

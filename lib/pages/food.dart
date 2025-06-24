@@ -317,7 +317,7 @@ class FoodCard extends StatelessWidget {
                 padding: const EdgeInsets.all(4.0),
                 child: Icon(
                   isFavorited ? Icons.star : Icons.star_border,
-                  color: isFavorited ? Colors.amber : Colors.grey,
+                  color: isFavorited ? Colors.amber : Colors.white,
                   size: 22,
                 ),
               ),

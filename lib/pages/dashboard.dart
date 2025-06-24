@@ -79,9 +79,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Future<void> fetchFoods() async {
     try {
-      final fetchedFoods = await FoodController.getAllFoods();
+      final fetchedFoods = await FoodController.getTop3Foods();
       setState(() {
-        foods = fetchedFoods.take(3).toList();
+        foods = fetchedFoods;
         isLoadingFoods = false;
         foodLoadError = null;
       });

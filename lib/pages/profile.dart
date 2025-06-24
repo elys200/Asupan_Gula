@@ -112,10 +112,6 @@ class _ProfilePageState extends State<ProfilePage>
           fontWeight: FontWeight.w500,
         ),
       ),
-      leading: IconButton(
-        icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
-        onPressed: () => Navigator.pushNamed(context, '/dashboard'),
-      ),
       flexibleSpace: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
