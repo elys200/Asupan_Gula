@@ -1,15 +1,12 @@
-// Nama File: edit_profile.dart
-// Deskripsi: Halaman untuk mengedit profil pengguna.
-// Dibuat oleh: Jihan Safinatunnaja - NIM: 3312301065
-// Tanggal: 6 May 2024
-
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:quickalert/quickalert.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import '../../controllers/profile_controller.dart';
 
-/// Halaman untuk mengedit profil pengguna.
 class EditProfilePage extends StatefulWidget {
   const EditProfilePage({super.key});
 
@@ -18,33 +15,40 @@ class EditProfilePage extends StatefulWidget {
 }
 
 class _EditProfilePageState extends State<EditProfilePage> {
-  File? _imageFile;
-  final ImagePicker _picker = ImagePicker();
-  bool _hasChanged = false;
+  final ProfileController profileController = Get.find<ProfileController>();
 
-  // Controller untuk form field dengan nilai default
+  File? _imageFile;
+  bool _hasChanged = false;
+  bool _isUploadingImage = false;
+
   late final TextEditingController _nameController;
+  late final TextEditingController _emailController;
   late final TextEditingController _birthController;
-  late final TextEditingController _genderController;
+  late String _genderValue;
   late final TextEditingController _weightController;
+
+  final List<String> _genderOptions = ['Pria', 'Wanita'];
 
   @override
   void initState() {
     super.initState();
-    // Inisialisasi controller dengan nilai awal
-    _nameController = TextEditingController(text: 'Elys');
-    _birthController = TextEditingController(text: '01/01/2000');
-    _genderController = TextEditingController(text: 'Perempuan');
-    _weightController = TextEditingController(text: '55');
 
-    // Untuk mendeteksi perubahan pada text field
+    final user = profileController.user.value;
+
+    _nameController = TextEditingController(text: user?.username ?? '');
+    _emailController = TextEditingController(text: user?.email ?? '');
+    _birthController =
+        TextEditingController(text: (user?.umur ?? 0).toString());
+    _genderValue = user?.jenisKelamin ?? 'Pria';
+    _weightController =
+        TextEditingController(text: (user?.beratBadan ?? 0.0).toString());
+
     _nameController.addListener(_onTextChanged);
+    _emailController.addListener(_onTextChanged);
     _birthController.addListener(_onTextChanged);
-    _genderController.addListener(_onTextChanged);
     _weightController.addListener(_onTextChanged);
   }
 
-  // Callback yang dijalankan ketika ada perubahan pada text field
   void _onTextChanged() {
     if (!_hasChanged) {
       setState(() => _hasChanged = true);
@@ -54,13 +58,13 @@ class _EditProfilePageState extends State<EditProfilePage> {
   @override
   void dispose() {
     _nameController.removeListener(_onTextChanged);
+    _emailController.removeListener(_onTextChanged);
     _birthController.removeListener(_onTextChanged);
-    _genderController.removeListener(_onTextChanged);
     _weightController.removeListener(_onTextChanged);
 
     _nameController.dispose();
+    _emailController.dispose();
     _birthController.dispose();
-    _genderController.dispose();
     _weightController.dispose();
     super.dispose();
   }
@@ -80,14 +84,15 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 children: [
                   const SizedBox(height: 16),
-                  _buildEditableField(_nameController, 'Nama Pengguna'),
-                  _buildEditableField(_birthController, 'Tanggal Lahir'),
-                  _buildEditableField(_genderController, 'Gender'),
-                  _buildEditableField(
-                    _weightController,
-                    'Berat Badan (kg)',
-                    keyboardType: TextInputType.number,
-                  ),
+                  _buildEditableField(_nameController, 'Nama Pengguna',
+                      noSpaces: true),
+                  _buildEditableField(_emailController, 'Email',
+                      keyboardType: TextInputType.emailAddress, noSpaces: true),
+                  _buildEditableField(_birthController, 'Umur',
+                      keyboardType: TextInputType.number),
+                  _buildGenderDropdown(),
+                  _buildEditableField(_weightController, 'Berat Badan (kg)',
+                      keyboardType: TextInputType.number),
                   const SizedBox(height: 5),
                   _buildSaveButton(),
                   const SizedBox(height: 40),
@@ -150,7 +155,25 @@ class _EditProfilePageState extends State<EditProfilePage> {
       child: Center(
         child: Column(
           children: [
-            _buildProfileImageWithButton(),
+            Stack(
+              children: [
+                _buildProfileImage(),
+                if (_isUploadingImage)
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.4),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Center(
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
             const SizedBox(height: 40),
           ],
         ),
@@ -158,35 +181,37 @@ class _EditProfilePageState extends State<EditProfilePage> {
     );
   }
 
-  Widget _buildProfileImageWithButton() {
-    return Stack(
-      children: [
-        _buildProfileImage(),
-        Positioned(
-          bottom: 0,
-          right: 4,
-          child: GestureDetector(
-            onTap: _pickImage,
-            child: const CircleAvatar(
-              radius: 14,
-              backgroundColor: Colors.white,
-              child: Icon(Icons.camera_alt, size: 16, color: Colors.grey),
-            ),
-          ),
+  Widget _buildProfileImage() {
+    final user = profileController.user.value;
+
+    if (_imageFile != null) {
+      return CircleAvatar(
+        radius: 45,
+        backgroundColor: Colors.white,
+        backgroundImage: FileImage(_imageFile!),
+      );
+    } else if (user?.fotoUrl != null && user!.fotoUrl!.isNotEmpty) {
+      return CachedNetworkImage(
+        imageUrl: user.fotoUrl!,
+        imageBuilder: (context, imageProvider) => CircleAvatar(
+          radius: 45,
+          backgroundColor: Colors.white,
+          backgroundImage: imageProvider,
         ),
-      ],
-    );
+        placeholder: (context, url) => _buildAvatarPlaceholder(),
+        errorWidget: (context, url, error) => _buildAvatarPlaceholder(),
+        memCacheHeight: 200,
+        memCacheWidth: 200,
+      );
+    }
+    return _buildAvatarPlaceholder();
   }
 
-  Widget _buildProfileImage() {
+  Widget _buildAvatarPlaceholder() {
     return CircleAvatar(
       radius: 45,
       backgroundColor: Colors.white,
-      // Menggunakan image file jika ada,kembali ke asset default
-      backgroundImage:
-          _imageFile != null
-              ? FileImage(_imageFile!)
-              : const AssetImage('assets/images/portrait.png') as ImageProvider,
+      child: Icon(Icons.person, size: 40, color: Colors.grey),
     );
   }
 
@@ -194,12 +219,19 @@ class _EditProfilePageState extends State<EditProfilePage> {
     TextEditingController controller,
     String label, {
     TextInputType keyboardType = TextInputType.text,
+    bool noSpaces = false,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: TextField(
         controller: controller,
         keyboardType: keyboardType,
+        inputFormatters: noSpaces
+            ? [
+                FilteringTextInputFormatter.deny(
+                    RegExp(r'\s')), // Blokir semua spasi
+              ]
+            : null,
         style: GoogleFonts.poppins(fontSize: 15),
         decoration: InputDecoration(
           labelText: label,
@@ -213,6 +245,47 @@ class _EditProfilePageState extends State<EditProfilePage> {
           ),
           focusedBorder: const UnderlineInputBorder(
             borderSide: BorderSide(color: Color(0xFFE43A15), width: 2),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGenderDropdown() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: InputDecorator(
+        decoration: InputDecoration(
+          labelText: 'Jenis Kelamin',
+          labelStyle: GoogleFonts.poppins(fontSize: 15, color: Colors.black),
+          enabledBorder: const UnderlineInputBorder(
+            borderSide: BorderSide(color: Colors.black26),
+          ),
+          focusedBorder: const UnderlineInputBorder(
+            borderSide: BorderSide(color: Color(0xFFE43A15), width: 2),
+          ),
+        ),
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton<String>(
+            value: _genderValue,
+            isExpanded: true,
+            items: _genderOptions
+                .map((gender) => DropdownMenuItem<String>(
+                      value: gender,
+                      child: Text(
+                        gender,
+                        style: GoogleFonts.poppins(fontSize: 15),
+                      ),
+                    ))
+                .toList(),
+            onChanged: (value) {
+              if (value != null) {
+                setState(() {
+                  _genderValue = value;
+                  _hasChanged = true;
+                });
+              }
+            },
           ),
         ),
       ),
@@ -244,43 +317,153 @@ class _EditProfilePageState extends State<EditProfilePage> {
     );
   }
 
-  void _saveChanges() {
+  Future<void> _saveChanges() async {
+    final String name = _nameController.text.trim();
+    final String email = _emailController.text.trim();
+    final String birthStr = _birthController.text.trim();
+    final String weightStr = _weightController.text.trim();
+
+    // Validasi tambahan untuk memastikan tidak ada spasi yang lolos
+    if (name.contains(' ')) {
+      QuickAlert.show(
+        context: context,
+        type: QuickAlertType.error,
+        title: 'Input Tidak Valid',
+        text: 'Nama pengguna tidak boleh mengandung spasi.',
+        confirmBtnText: 'OK',
+        confirmBtnColor: const Color(0xFFFF4A4A),
+      );
+      return;
+    }
+
+    if (email.contains(' ')) {
+      QuickAlert.show(
+        context: context,
+        type: QuickAlertType.error,
+        title: 'Input Tidak Valid',
+        text: 'Email tidak boleh mengandung spasi.',
+        confirmBtnText: 'OK',
+        confirmBtnColor: const Color(0xFFFF4A4A),
+      );
+      return;
+    }
+
+    // Validasi field kosong
+    if (name.isEmpty) {
+      QuickAlert.show(
+        context: context,
+        type: QuickAlertType.error,
+        title: 'Input Tidak Valid',
+        text: 'Nama pengguna tidak boleh kosong.',
+        confirmBtnText: 'OK',
+        confirmBtnColor: const Color(0xFFFF4A4A),
+      );
+      return;
+    }
+
+    if (email.isEmpty) {
+      QuickAlert.show(
+        context: context,
+        type: QuickAlertType.error,
+        title: 'Input Tidak Valid',
+        text: 'Email tidak boleh kosong.',
+        confirmBtnText: 'OK',
+        confirmBtnColor: const Color(0xFFFF4A4A),
+      );
+      return;
+    }
+
+    // Validasi format email
+    if (!RegExp(r'^[^@]+@[^@]+\.[^@]+$').hasMatch(email)) {
+      QuickAlert.show(
+        context: context,
+        type: QuickAlertType.error,
+        title: 'Input Tidak Valid',
+        text: 'Format email tidak valid.',
+        confirmBtnText: 'OK',
+        confirmBtnColor: const Color(0xFFFF4A4A),
+      );
+      return;
+    }
+
+    int? umur = int.tryParse(birthStr);
+    double? berat = double.tryParse(weightStr);
+
+    if (umur == null || berat == null) {
+      QuickAlert.show(
+        context: context,
+        type: QuickAlertType.error,
+        text: 'Umur dan berat badan harus berupa angka.',
+        confirmBtnText: 'OK',
+        confirmBtnColor: const Color(0xFFFF4A4A),
+      );
+      return;
+    }
+
+    if (umur <= 0 || umur > 150) {
+      QuickAlert.show(
+        context: context,
+        type: QuickAlertType.error,
+        title: 'Input Tidak Valid',
+        text: 'Umur harus antara 1-150 tahun.',
+        confirmBtnText: 'OK',
+        confirmBtnColor: const Color(0xFFFF4A4A),
+      );
+      return;
+    }
+
+    if (berat <= 0 || berat > 500) {
+      QuickAlert.show(
+        context: context,
+        type: QuickAlertType.error,
+        title: 'Input Tidak Valid',
+        text: 'Berat badan harus antara 1-500 kg.',
+        confirmBtnText: 'OK',
+        confirmBtnColor: const Color(0xFFFF4A4A),
+      );
+      return;
+    }
+
     setState(() => _hasChanged = false);
 
-    QuickAlert.show(
-      context: context,
-      type: QuickAlertType.success,
-      text: 'Perubahan berhasil disimpan!',
-      confirmBtnText: 'OK',
-      backgroundColor: Colors.white,
-      confirmBtnColor: const Color(0xFFFF4A4A),
-      confirmBtnTextStyle: GoogleFonts.poppins(
-        fontSize: 16,
-        fontWeight: FontWeight.w600,
-        color: Colors.white,
-      ),
-      borderRadius: 20,
-      onConfirmBtnTap: () {
-        Navigator.of(context).pop();
-        Navigator.of(context).pop();
-      },
-    );
-  }
-
-  Future<void> _pickImage() async {
     try {
-      final XFile? pickedFile = await _picker.pickImage(
-        source: ImageSource.gallery,
-        imageQuality: 70,
+      await profileController.updateProfile(
+        username: name,
+        email: email,
+        jenisKelamin: _genderValue,
+        umur: umur,
+        beratBadan: berat,
+        imageFile: _imageFile,
       );
-      if (pickedFile != null) {
-        setState(() {
-          _imageFile = File(pickedFile.path);
-          _hasChanged = true;
-        });
-      }
+
+      if (!mounted) return;
+
+      QuickAlert.show(
+        context: context,
+        type: QuickAlertType.success,
+        text: 'Perubahan berhasil disimpan!',
+        confirmBtnText: 'OK',
+        confirmBtnColor: const Color(0xFFFF4A4A),
+        confirmBtnTextStyle: GoogleFonts.poppins(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+          color: Colors.white,
+        ),
+        borderRadius: 20,
+        onConfirmBtnTap: () {
+          Navigator.of(context).pop(); // Close alert
+          Navigator.of(context).pop(); // Back to profile
+        },
+      );
     } catch (e) {
-      debugPrint('Gagal memilih gambar: \$e');
+      QuickAlert.show(
+        context: context,
+        type: QuickAlertType.error,
+        title: 'Gagal',
+        text: e.toString().replaceFirst('Exception: ', ''),
+        confirmBtnText: 'OK',
+        confirmBtnColor: const Color(0xFFFF4A4A),
+      );
     }
   }
 }

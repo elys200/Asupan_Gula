@@ -4,8 +4,10 @@
 // Tanggal: 6 May 2024
 
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:quickalert/quickalert.dart';
+import 'package:sweetsense/controllers/profile_controller.dart';
 
 class ChangePasswordPage extends StatefulWidget {
   const ChangePasswordPage({super.key});
@@ -15,9 +17,20 @@ class ChangePasswordPage extends StatefulWidget {
 }
 
 class _ChangePasswordPageState extends State<ChangePasswordPage> {
-  // Variabel untuk mengontrol visibilitas password
+  bool _obscureCurrentPassword = true;
   bool _obscureNewPassword = true;
   bool _obscureConfirmPassword = true;
+  final _currentPasswordController = TextEditingController();
+  final _newPasswordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+
+  @override
+  void dispose() {
+    _currentPasswordController.dispose();
+    _newPasswordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -87,8 +100,27 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
   Widget _buildPasswordInputFields() {
     return Column(
       children: [
-        // Input Password Baru
         TextFormField(
+          controller: _currentPasswordController,
+          obscureText: _obscureCurrentPassword,
+          decoration: InputDecoration(
+            labelText: 'Kata Sandi Lama',
+            border: const OutlineInputBorder(),
+            suffixIcon: IconButton(
+              icon: Icon(
+                _obscureCurrentPassword
+                    ? Icons.visibility_off
+                    : Icons.visibility,
+              ),
+              onPressed: () => setState(() {
+                _obscureCurrentPassword = !_obscureCurrentPassword;
+              }),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        TextFormField(
+          controller: _newPasswordController,
           obscureText: _obscureNewPassword,
           decoration: InputDecoration(
             labelText: 'Kata Sandi Baru',
@@ -97,17 +129,15 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
               icon: Icon(
                 _obscureNewPassword ? Icons.visibility_off : Icons.visibility,
               ),
-              onPressed:
-                  () => setState(() {
-                    _obscureNewPassword = !_obscureNewPassword;
-                  }),
+              onPressed: () => setState(() {
+                _obscureNewPassword = !_obscureNewPassword;
+              }),
             ),
           ),
         ),
         const SizedBox(height: 16),
-
-        // Input Konfirmasi Password
         TextFormField(
+          controller: _confirmPasswordController,
           obscureText: _obscureConfirmPassword,
           decoration: InputDecoration(
             labelText: 'Konfirmasi Kata Sandi',
@@ -118,10 +148,9 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                     ? Icons.visibility_off
                     : Icons.visibility,
               ),
-              onPressed:
-                  () => setState(() {
-                    _obscureConfirmPassword = !_obscureConfirmPassword;
-                  }),
+              onPressed: () => setState(() {
+                _obscureConfirmPassword = !_obscureConfirmPassword;
+              }),
             ),
           ),
         ),
@@ -162,7 +191,27 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
   }
 
   // Handler untuk tombol ganti password
-  void _handlePasswordChange() {
+  void _handlePasswordChange() async {
+    final current = _currentPasswordController.text.trim();
+    final newPassword = _newPasswordController.text.trim();
+    final confirm = _confirmPasswordController.text.trim();
+
+    if (newPassword != confirm) {
+      QuickAlert.show(
+        context: context,
+        type: QuickAlertType.error,
+        text: 'Konfirmasi kata sandi tidak cocok.',
+      );
+      return;
+    }
+
+    final controller = Get.find<ProfileController>();
+    await controller.changePassword(current, newPassword, confirm);
+
+    // Check if widget is still mounted before showing alert
+    if (!mounted) return;
+    
+    // Menampilkan alert dan kembali
     QuickAlert.show(
       context: context,
       type: QuickAlertType.success,
@@ -177,7 +226,6 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
       ),
       borderRadius: 20,
       onConfirmBtnTap: () {
-        // Kembali ke halaman sebelumnya setelah konfirmasi
         Navigator.of(context).pop(); // Tutup alert
         Navigator.of(context).pop(); // Kembali ke halaman sebelumnya
       },

@@ -1,20 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:sweetsense/controllers/authentication.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
   @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  final TextEditingController usernameController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+  final _authController = Get.find<AuthenticationController>();
+
+  @override
   Widget build(BuildContext context) {
-    // Get screen dimensions for a fully responsive layout
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
 
     return Scaffold(
       body: Stack(
-        // Set fit to expand to make the Stack fill the entire screen
         fit: StackFit.expand,
         children: [
-          // Top background curve - now responsive
+          // TOP CURVE
           Positioned(
             top: 0,
             left: 0,
@@ -22,7 +31,7 @@ class LoginScreen extends StatelessWidget {
             child: ClipPath(
               clipper: TopCurveClipper(),
               child: Container(
-                height: screenHeight * 0.1, // Responsive height
+                height: screenHeight * 0.1,
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
                     colors: [Color(0xFFE43A15), Color(0xFFE65245)],
@@ -35,14 +44,14 @@ class LoginScreen extends StatelessWidget {
                   child: Image.asset(
                     'assets/images/food3.png',
                     fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
+                    errorBuilder: (_, __, ___) => const SizedBox.shrink(),
                   ),
                 ),
               ),
             ),
           ),
 
-          // Bottom background curve - now responsive and fixed
+          // BOTTOM CURVE
           Positioned(
             bottom: 0,
             left: 0,
@@ -50,7 +59,7 @@ class LoginScreen extends StatelessWidget {
             child: ClipPath(
               clipper: BottomCurveClipper(),
               child: Container(
-                height: screenHeight * 0.2, // Responsive height
+                height: screenHeight * 0.2,
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
                     colors: [Color(0xFFE43A15), Color(0xFFE65245)],
@@ -63,55 +72,80 @@ class LoginScreen extends StatelessWidget {
                   child: Image.asset(
                     'assets/images/food3.png',
                     fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
+                    errorBuilder: (_, __, ___) => const SizedBox.shrink(),
                   ),
                 ),
               ),
             ),
           ),
 
-          // Main content - now fully responsive
+          // MAIN CONTENT
           SafeArea(
             child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.06), // Responsive padding
-              child: SingleChildScrollView( // Allows content to scroll
-                // Added padding to prevent content from scrolling under the bottom curve
+              padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.06),
+              child: SingleChildScrollView(
                 padding: EdgeInsets.only(bottom: screenHeight * 0.2),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     IconButton(
                       icon: const Icon(Icons.arrow_back),
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
+                      onPressed: () => Navigator.pop(context),
                     ),
-                    SizedBox(height: screenHeight * 0.1), // Responsive spacing
+                    SizedBox(height: screenHeight * 0.1),
                     Text(
                       'Login',
                       style: TextStyle(
-                        fontSize: screenWidth * 0.08, // Responsive font size
-                        fontWeight: FontWeight.bold
+                        fontSize: screenWidth * 0.08,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                    SizedBox(height: screenHeight * 0.04), // Responsive spacing
-                    const CustomTextField(hint: 'Username'),
-                    SizedBox(height: screenHeight * 0.025), // Responsive spacing
-                    const CustomTextField(hint: 'Password', obscureText: true),
-                    SizedBox(height: screenHeight * 0.05), // Responsive spacing
+                    SizedBox(height: screenHeight * 0.04),
+                    CustomTextField(
+                      hint: 'Username',
+                      controller: usernameController,
+                    ),
+                    SizedBox(height: screenHeight * 0.025),
+                    CustomTextField(
+                      hint: 'Password',
+                      controller: passwordController,
+                      obscureText: true,
+                    ),
+                    SizedBox(height: screenHeight * 0.05),
                     Center(
                       child: ElevatedButton(
-                        onPressed: () {
-                         Navigator.pushNamed(context, '/dashboard');
+                        onPressed: () async {
+                          final username = usernameController.text.trim();
+                          final password = passwordController.text.trim();
+
+                          if (username.isEmpty || password.isEmpty) {
+                            Get.snackbar(
+                              'Login Gagal',
+                              'Username dan password tidak boleh kosong',
+                              backgroundColor: Colors.redAccent,
+                              colorText: Colors.white,
+                            );
+                            return;
+                          }
+
+                          final result = await _authController.login(
+                            username: username,
+                            password: password,
+                          );
+
+                          if (result != null) {
+                            Get.offAllNamed('/dashboard');
+                          }
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFFFF5858),
                           padding: EdgeInsets.symmetric(
-                            horizontal: screenWidth * 0.2, // Responsive padding
-                            vertical: screenHeight * 0.018, // Responsive padding
+                            horizontal: screenWidth * 0.2,
+                            vertical: screenHeight * 0.018,
                           ),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(screenWidth * 0.03), // Responsive radius
+                            borderRadius:
+                                BorderRadius.circular(screenWidth * 0.03),
                           ),
                           elevation: 5,
                         ),
@@ -119,12 +153,12 @@ class LoginScreen extends StatelessWidget {
                           'Login',
                           style: TextStyle(
                             color: Colors.white,
-                            fontSize: screenWidth * 0.04, // Responsive font size
+                            fontSize: screenWidth * 0.04,
                           ),
                         ),
                       ),
                     ),
-                    SizedBox(height: screenHeight * 0.025), // Responsive spacing
+                    SizedBox(height: screenHeight * 0.025),
                     Center(
                       child: GestureDetector(
                         onTap: () {
@@ -133,7 +167,9 @@ class LoginScreen extends StatelessWidget {
                         child: Text.rich(
                           TextSpan(
                             text: "Don’t have an account yet? ",
-                            style: TextStyle(fontSize: screenWidth * 0.035), // Responsive font size
+                            style: TextStyle(
+                              fontSize: screenWidth * 0.035,
+                            ),
                             children: [
                               TextSpan(
                                 text: 'Sign Up',
@@ -141,7 +177,7 @@ class LoginScreen extends StatelessWidget {
                                   fontWeight: FontWeight.bold,
                                   decoration: TextDecoration.underline,
                                   color: Colors.black,
-                                  fontSize: screenWidth * 0.035, // Responsive font size
+                                  fontSize: screenWidth * 0.035,
                                 ),
                               ),
                             ],
@@ -160,16 +196,30 @@ class LoginScreen extends StatelessWidget {
   }
 }
 
-// Custom Text Field Widget - now responsive
-class CustomTextField extends StatelessWidget {
+class CustomTextField extends StatefulWidget {
   final String hint;
+  final TextEditingController controller;
   final bool obscureText;
 
   const CustomTextField({
     super.key,
     required this.hint,
+    required this.controller,
     this.obscureText = false,
   });
+
+  @override
+  State<CustomTextField> createState() => _CustomTextFieldState();
+}
+
+class _CustomTextFieldState extends State<CustomTextField> {
+  late bool _obscure;
+
+  @override
+  void initState() {
+    super.initState();
+    _obscure = widget.obscureText;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -177,29 +227,43 @@ class CustomTextField extends StatelessWidget {
     final screenHeight = MediaQuery.of(context).size.height;
 
     return TextField(
-      obscureText: obscureText,
+      controller: widget.controller,
+      obscureText: _obscure,
       decoration: InputDecoration(
-        hintText: hint,
+        hintText: widget.hint,
         filled: true,
         fillColor: const Color(0xFFF5F5F5),
         contentPadding: EdgeInsets.symmetric(
-          horizontal: screenWidth * 0.05, // Responsive padding
-          vertical: screenHeight * 0.02, // Responsive padding
+          horizontal: screenWidth * 0.05,
+          vertical: screenHeight * 0.02,
         ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(screenWidth * 0.05), // Responsive radius
+          borderRadius: BorderRadius.circular(screenWidth * 0.05),
           borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(screenWidth * 0.05), // Responsive radius
+          borderRadius: BorderRadius.circular(screenWidth * 0.05),
           borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
         ),
+        suffixIcon: widget.obscureText
+            ? IconButton(
+                icon: Icon(
+                  _obscure ? Icons.visibility_off : Icons.visibility,
+                  color: Colors.grey,
+                ),
+                onPressed: () {
+                  setState(() {
+                    _obscure = !_obscure;
+                  });
+                },
+              )
+            : null,
       ),
     );
   }
 }
 
-// Smaller Top Curve Clipper (from your login.dart)
+// Curved Background
 class TopCurveClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
@@ -207,7 +271,7 @@ class TopCurveClipper extends CustomClipper<Path> {
     path.lineTo(0, size.height - 5);
     path.quadraticBezierTo(
       size.width / 2,
-      size.height + 10, // slight dip
+      size.height + 10,
       size.width,
       size.height - 5,
     );
@@ -220,7 +284,6 @@ class TopCurveClipper extends CustomClipper<Path> {
   bool shouldReclip(CustomClipper<Path> oldClipper) => false;
 }
 
-// Bottom Curve Clipper (from your login.dart)
 class BottomCurveClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {

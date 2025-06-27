@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'jurnal_service.dart';
+import 'jurnal_entry.dart';
 
 class JurnalPage extends StatefulWidget {
   const JurnalPage({Key? key}) : super(key: key);
@@ -7,225 +9,365 @@ class JurnalPage extends StatefulWidget {
   State<JurnalPage> createState() => _JurnalPageState();
 }
 
-class _JurnalPageState extends State<JurnalPage> {
+class _JurnalPageState extends State<JurnalPage>
+    with SingleTickerProviderStateMixin {
+  final JurnalService _jurnalService = JurnalService();
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
   String selectedFilter = "Weekly";
 
-  final List<Map<String, dynamic>> jurnalData = [
-    {
-      'tanggal': 'Senin, 10 April 2025',
-      'status': 'Normal',
-      'statusColor': Colors.green,
-      'jam': '08:40 PM',
-      'kalori': '220',
-      'karbo': '50',
-      'lemak': '12',
-      'gula': '24',
-    },
-    {
-      'tanggal': 'Rabu, 12 April 2025',
-      'status': 'Low',
-      'statusColor': Colors.yellow,
-      'jam': '08:40 PM',
-      'kalori': '180',
-      'karbo': '40',
-      'lemak': '10',
-      'gula': '20',
-    },
-    {
-      'tanggal': 'Kamis, 13 April 2025',
-      'status': 'Normal',
-      'statusColor': Colors.green,
-      'jam': '08:40 PM',
-      'kalori': '225',
-      'karbo': '48',
-      'lemak': '11',
-      'gula': '23',
-    },
-    {
-      'tanggal': 'Sabtu, 15 April 2025',
-      'status': 'High',
-      'statusColor': Colors.red,
-      'jam': '08:40 PM',
-      'kalori': '298',
-      'karbo': '60',
-      'lemak': '15',
-      'gula': '30',
-    },
-    {
-      'tanggal': 'Minggu, 16 April 2025',
-      'status': 'High',
-      'statusColor': Colors.red,
-      'jam': '08:40 PM',
-      'kalori': '285',
-      'karbo': '55',
-      'lemak': '14',
-      'gula': '28',
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
+    _animationController.forward();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+    final jurnalEntries = _jurnalService.jurnalEntries;
+
     return Scaffold(
-      backgroundColor: Colors.white,
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Colors.white,
-        selectedItemColor: Colors.red,
-        unselectedItemColor: Colors.grey,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.grid_view), label: ''),
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: ''),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: ''),
-        ],
-        currentIndex: 1,
-        onTap: (index) {},
-      ),
-      body: Column(
-        children: [
-          Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Color(0xFFFE774C), Color(0xFFF44336)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(24),
-                bottomRight: Radius.circular(24),
-              ),
-            ),
-            padding: const EdgeInsets.fromLTRB(16, 50, 16, 24),
-            width: double.infinity,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                Text(
-                  "Hi Mia",
-                  style: TextStyle(color: Colors.white, fontSize: 16),
+      backgroundColor: const Color(0xFFF8F9FA),
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Header Section
+            Container(
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [
+                    Color(0xFFE43A15),
+                    Color(0xFFE65245),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
-                SizedBox(height: 4),
-                Text(
-                  "Rekam Jejak\nMakanmu",
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(32),
+                  bottomRight: Radius.circular(32),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
                   ),
-                ),
-              ],
+                ],
+              ),
+              padding: EdgeInsets.fromLTRB(
+                screenWidth * 0.06,
+                screenHeight * 0.02,
+                screenWidth * 0.06,
+                screenHeight * 0.03,
+              ),
+              width: double.infinity,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Back Button
+                      GestureDetector(
+                        onTap: () => Navigator.of(context)
+                            .pushReplacementNamed('/dashboard'),
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: Colors.white.withOpacity(0.3),
+                              width: 1,
+                            ),
+                          ),
+                          child: Icon(
+                            Icons.arrow_back_ios_new,
+                            color: Colors.white,
+                            size: screenWidth * 0.05,
+                          ),
+                        ),
+                      ),
+                      // Title Section
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Text(
+                              "Hi Mia 👋",
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.9),
+                                fontSize: screenWidth * 0.04,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            SizedBox(height: screenHeight * 0.005),
+                            Text(
+                              "Rekam Jejak\nMakanmu",
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: screenWidth * 0.07,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                                height: 1.2,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      // Icon
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: Colors.white.withOpacity(0.3),
+                            width: 1,
+                          ),
+                        ),
+                        child: Icon(
+                          Icons.restaurant_menu,
+                          color: Colors.white,
+                          size: screenWidth * 0.06,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: screenHeight * 0.02),
+                  // Quick Stats
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: Colors.white.withOpacity(0.2),
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        _buildQuickStat("Entries", "${jurnalEntries.length}",
+                            Icons.bookmark),
+                        _buildQuickStat("This Week", "7", Icons.calendar_today),
+                        _buildQuickStat(
+                            "Avg Cal", "1.2k", Icons.local_fire_department),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                FilterButton(
-                  label: "Today",
-                  selected: selectedFilter == "Today",
-                  onTap: () {
-                    setState(() {
-                      selectedFilter = "Today";
-                    });
-                  },
+
+            // Filter Section
+            Padding(
+              padding: EdgeInsets.all(screenWidth * 0.04),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    _buildFilterButton("Today", screenWidth),
+                    SizedBox(width: screenWidth * 0.03),
+                    _buildFilterButton("Weekly", screenWidth),
+                    SizedBox(width: screenWidth * 0.03),
+                    _buildFilterButton("Monthly", screenWidth),
+                    SizedBox(width: screenWidth * 0.03),
+                    _buildFilterButton("Yearly", screenWidth),
+                  ],
                 ),
-                FilterButton(
-                  label: "Weekly",
-                  selected: selectedFilter == "Weekly",
-                  onTap: () {
-                    setState(() {
-                      selectedFilter = "Weekly";
-                    });
-                  },
-                ),
-                FilterButton(
-                  label: "Monthly",
-                  selected: selectedFilter == "Monthly",
-                  onTap: () {
-                    setState(() {
-                      selectedFilter = "Monthly";
-                    });
-                  },
-                ),
-                FilterButton(
-                  label: "Yearly",
-                  selected: selectedFilter == "Yearly",
-                  onTap: () {
-                    setState(() {
-                      selectedFilter = "Yearly";
-                    });
-                  },
-                ),
-              ],
+              ),
             ),
-          ),
-          Expanded(
-            child: ListView.builder(
-              itemCount: jurnalData.length,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemBuilder: (context, index) {
-                final item = jurnalData[index];
-                return JurnalCard(
-                  tanggal: item['tanggal'],
-                  status: item['status'],
-                  statusColor: item['statusColor'],
-                  jam: item['jam'],
-                  kalori: item['kalori'],
-                  karbo: item['karbo'],
-                  lemak: item['lemak'],
-                  gula: item['gula'],
-                );
-              },
+
+            // Journal Entries List
+            Expanded(
+              child: FadeTransition(
+                opacity: _fadeAnimation,
+                child: jurnalEntries.isEmpty
+                    ? _buildEmptyState(screenWidth, screenHeight)
+                    : ListView.builder(
+                        itemCount: jurnalEntries.length,
+                        padding: EdgeInsets.symmetric(
+                            horizontal: screenWidth * 0.04),
+                        itemBuilder: (context, index) {
+                          final entry = jurnalEntries[index];
+                          return TweenAnimationBuilder<double>(
+                            duration:
+                                Duration(milliseconds: 300 + (index * 100)),
+                            tween: Tween(begin: 0.0, end: 1.0),
+                            builder: (context, value, child) {
+                              return Transform.translate(
+                                offset: Offset(0, (1 - value) * 50),
+                                child: Opacity(
+                                  opacity: value,
+                                  child: child,
+                                ),
+                              );
+                            },
+                            child: JurnalCard(
+                              tanggal: entry.tanggal,
+                              waktuMakan: entry.waktuMakan,
+                              status: entry.status,
+                              statusColor: entry.statusColor,
+                              jam: entry.jam,
+                              kalori: entry.totalKalori.toStringAsFixed(0),
+                              karbo: entry.totalKarbo.toStringAsFixed(0),
+                              lemak: entry.totalLemak.toStringAsFixed(0),
+                              gula: entry.totalGula.toStringAsFixed(0),
+                              makananList: entry.makananList,
+                              onDelete: () {
+                                setState(() {
+                                  _jurnalService.removeJurnalEntry(index);
+                                });
+                              },
+                            ),
+                          );
+                        },
+                      ),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
-}
 
-class FilterButton extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
+  Widget _buildQuickStat(String label, String value, IconData icon) {
+    return Column(
+      children: [
+        Icon(icon, color: Colors.white, size: 20),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        Text(
+          label,
+          style: TextStyle(
+            color: Colors.white.withOpacity(0.8),
+            fontSize: 12,
+          ),
+        ),
+      ],
+    );
+  }
 
-  const FilterButton({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-    super.key,
-  });
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildFilterButton(String label, double screenWidth) {
+    final isSelected = selectedFilter == label;
     return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+      onTap: () {
+        setState(() {
+          selectedFilter = label;
+        });
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: EdgeInsets.symmetric(
+          horizontal: screenWidth * 0.04,
+          vertical: screenWidth * 0.025,
+        ),
         decoration: BoxDecoration(
-          color: selected ? Colors.red : Colors.grey.shade200,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: selected
-              ? [BoxShadow(color: Colors.red.shade200, blurRadius: 4)]
-              : [],
+          gradient: isSelected
+              ? const LinearGradient(
+                  colors: [Color(0xFFE43A15), Color(0xFFE65245)],
+                )
+              : null,
+          color: isSelected ? null : Colors.white,
+          borderRadius: BorderRadius.circular(25),
+          boxShadow: [
+            BoxShadow(
+              color: isSelected
+                  ? const Color(0xFFE43A15).withOpacity(0.3)
+                  : Colors.black.withOpacity(0.05),
+              blurRadius: isSelected ? 8 : 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+          border: isSelected
+              ? null
+              : Border.all(color: Colors.grey.shade300, width: 1),
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: selected ? Colors.white : Colors.black,
-            fontWeight: FontWeight.bold,
+            color: isSelected ? Colors.white : Colors.grey.shade700,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+            fontSize: screenWidth * 0.035,
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(double screenWidth, double screenHeight) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade100,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.restaurant_menu,
+              size: screenWidth * 0.15,
+              color: Colors.grey.shade400,
+            ),
+          ),
+          SizedBox(height: screenHeight * 0.03),
+          Text(
+            "Belum ada data jurnal",
+            style: TextStyle(
+              fontSize: screenWidth * 0.05,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey.shade600,
+            ),
+          ),
+          SizedBox(height: screenHeight * 0.01),
+          Text(
+            "Mulai catat makananmu hari ini!",
+            style: TextStyle(
+              fontSize: screenWidth * 0.035,
+              color: Colors.grey.shade500,
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
 class JurnalCard extends StatelessWidget {
-  final String tanggal, status, jam, kalori, karbo, lemak, gula;
+  final String tanggal, waktuMakan, status, jam, kalori, karbo, lemak, gula;
   final Color statusColor;
+  final List<MakananItem> makananList;
+  final VoidCallback onDelete;
 
   const JurnalCard({
     required this.tanggal,
+    required this.waktuMakan,
     required this.status,
     required this.statusColor,
     required this.jam,
@@ -233,101 +375,557 @@ class JurnalCard extends StatelessWidget {
     required this.karbo,
     required this.lemak,
     required this.gula,
+    required this.makananList,
+    required this.onDelete,
     super.key,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      elevation: 4,
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: Image.asset(
-                'images/food2.png',
-                width: 60,
-                height: 60,
-                fit: BoxFit.cover,
+    final screenWidth = MediaQuery.of(context).size.width;
+
+    return Container(
+      margin: EdgeInsets.only(bottom: screenWidth * 0.04),
+      child: Material(
+        elevation: 0,
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.grey.shade200, width: 1),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 2),
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    tanggal,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      const Text("Status: "),
-                      Icon(Icons.circle, color: statusColor, size: 12),
-                      const SizedBox(width: 4),
-                      Text(status),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      NutritionItem(label: 'Kalori', value: kalori),
-                      NutritionItem(label: 'Karbo', value: karbo),
-                      NutritionItem(label: 'Lemak', value: lemak),
-                      NutritionItem(label: 'Gula', value: gula),
-                    ],
-                  )
-                ],
-              ),
-            ),
-            Column(
+            ],
+          ),
+          child: Padding(
+            padding: EdgeInsets.all(screenWidth * 0.04),
+            child: Column(
               children: [
-                Text(jam, style: const TextStyle(fontSize: 12)),
-                const SizedBox(height: 12),
-                ElevatedButton(
-                  onPressed: () {},
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                // Header Row
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            statusColor.withOpacity(0.1),
+                            statusColor.withOpacity(0.05),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Icon(
+                        _getTimeIcon(waktuMakan),
+                        color: statusColor,
+                        size: screenWidth * 0.06,
+                      ),
+                    ),
+                    SizedBox(width: screenWidth * 0.03),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            tanggal,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: screenWidth * 0.04,
+                              color: Colors.grey.shade800,
+                            ),
+                          ),
+                          SizedBox(height: screenWidth * 0.01),
+                          Text(
+                            waktuMakan,
+                            style: TextStyle(
+                              fontSize: screenWidth * 0.035,
+                              color: Colors.grey.shade600,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          jam,
+                          style: TextStyle(
+                            fontSize: screenWidth * 0.03,
+                            color: Colors.grey.shade500,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        SizedBox(height: screenWidth * 0.01),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: statusColor.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                width: 6,
+                                height: 6,
+                                decoration: BoxDecoration(
+                                  color: statusColor,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              SizedBox(width: screenWidth * 0.015),
+                              Text(
+                                status,
+                                style: TextStyle(
+                                  color: statusColor,
+                                  fontSize: screenWidth * 0.03,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+
+                SizedBox(height: screenWidth * 0.04),
+
+                // Nutrition Info
+                Container(
+                  padding: EdgeInsets.all(screenWidth * 0.04),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade50,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: _buildNutritionItem(
+                            "Kalori",
+                            kalori,
+                            "kkal",
+                            Icons.local_fire_department,
+                            Colors.orange,
+                            screenWidth),
+                      ),
+                      Expanded(
+                        child: _buildNutritionItem("Karbo", karbo, "g",
+                            Icons.grain, Colors.brown, screenWidth),
+                      ),
+                      Expanded(
+                        child: _buildNutritionItem("Lemak", lemak, "g",
+                            Icons.opacity, Colors.yellow.shade700, screenWidth),
+                      ),
+                      Expanded(
+                        child: _buildNutritionItem("Gula", gula, "g",
+                            Icons.cake, Colors.pink, screenWidth),
+                      ),
+                    ],
+                  ),
+                ),
+
+                SizedBox(height: screenWidth * 0.04),
+
+                // Action Button
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => _showDetailDialog(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFE43A15),
+                      foregroundColor: Colors.white,
+                      padding:
+                          EdgeInsets.symmetric(vertical: screenWidth * 0.035),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: Text(
+                      "Lihat Detail",
+                      style: TextStyle(
+                        fontSize: screenWidth * 0.04,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
-                  child: const Text(
-                    "Lihat Detail",
-                    style: TextStyle(fontSize: 12),
-                  ),
-                )
+                ),
               ],
-            )
-          ],
+            ),
+          ),
         ),
       ),
     );
   }
-}
 
-class NutritionItem extends StatelessWidget {
-  final String label;
-  final String value;
+  Widget _buildNutritionItem(String label, String value, String unit,
+      IconData icon, Color color, double screenWidth) {
+    return Column(
+      children: [
+        Icon(icon, color: color, size: screenWidth * 0.05),
+        SizedBox(height: screenWidth * 0.02),
+        Text(
+          value,
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: screenWidth * 0.035,
+            color: Colors.grey.shade800,
+          ),
+        ),
+        Text(
+          "$label ($unit)",
+          style: TextStyle(
+            fontSize: screenWidth * 0.025,
+            color: Colors.grey.shade600,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
+  }
 
-  const NutritionItem({required this.label, required this.value, super.key});
+  IconData _getTimeIcon(String waktuMakan) {
+    switch (waktuMakan.toLowerCase()) {
+      case 'sarapan':
+        return Icons.wb_sunny;
+      case 'makan siang':
+        return Icons.wb_sunny_outlined;
+      case 'makan malam':
+        return Icons.nightlight_round;
+      default:
+        return Icons.restaurant;
+    }
+  }
 
-  @override
-  Widget build(BuildContext context) {
+  void _showDetailDialog(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          child: Container(
+            constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.8),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Header
+                Container(
+                  padding: EdgeInsets.all(screenWidth * 0.05),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        statusColor.withOpacity(0.1),
+                        statusColor.withOpacity(0.05)
+                      ],
+                    ),
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(20),
+                      topRight: Radius.circular(20),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(_getTimeIcon(waktuMakan),
+                          color: statusColor, size: screenWidth * 0.06),
+                      SizedBox(width: screenWidth * 0.03),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Detail Makanan',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: screenWidth * 0.045,
+                              ),
+                            ),
+                            Text(
+                              waktuMakan,
+                              style: TextStyle(
+                                color: Colors.grey.shade600,
+                                fontSize: screenWidth * 0.035,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        icon: const Icon(Icons.close),
+                        iconSize: screenWidth * 0.06,
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Content
+                Flexible(
+                  child: SingleChildScrollView(
+                    padding: EdgeInsets.all(screenWidth * 0.05),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          tanggal,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: screenWidth * 0.04,
+                          ),
+                        ),
+                        SizedBox(height: screenWidth * 0.03),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: statusColor.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                width: 8,
+                                height: 8,
+                                decoration: BoxDecoration(
+                                  color: statusColor,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                "Status: $status",
+                                style: TextStyle(
+                                  color: statusColor,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(height: screenWidth * 0.05),
+                        Text(
+                          'Ringkasan Nutrisi',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: screenWidth * 0.04,
+                          ),
+                        ),
+                        SizedBox(height: screenWidth * 0.03),
+                        Container(
+                          padding: EdgeInsets.all(screenWidth * 0.04),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade50,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Column(
+                            children: [
+                              _buildNutritionRow('Kalori', kalori, 'kkal',
+                                  Icons.local_fire_department, Colors.orange),
+                              _buildNutritionRow('Gula', gula, 'gram',
+                                  Icons.cake, Colors.pink),
+                              _buildNutritionRow('Karbohidrat', karbo, 'gram',
+                                  Icons.grain, Colors.brown),
+                              _buildNutritionRow('Lemak', lemak, 'gram',
+                                  Icons.opacity, Colors.yellow.shade700),
+                            ],
+                          ),
+                        ),
+                        SizedBox(height: screenWidth * 0.05),
+                        Text(
+                          'Daftar Makanan',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: screenWidth * 0.04,
+                          ),
+                        ),
+                        SizedBox(height: screenWidth * 0.03),
+                        if (makananList.isEmpty)
+                          Container(
+                            padding: EdgeInsets.all(screenWidth * 0.04),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade50,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Center(
+                              child: Text('Tidak ada data makanan'),
+                            ),
+                          )
+                        else
+                          ...makananList.map((makanan) {
+                            return Container(
+                              margin: const EdgeInsets.only(bottom: 8),
+                              padding: EdgeInsets.all(screenWidth * 0.03),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: Colors.grey.shade200),
+                              ),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: Colors.orange.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Icon(
+                                      Icons.restaurant,
+                                      color: Colors.orange,
+                                      size: screenWidth * 0.04,
+                                    ),
+                                  ),
+                                  SizedBox(width: screenWidth * 0.03),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          makanan.nama,
+                                          style: const TextStyle(
+                                              fontWeight: FontWeight.w600),
+                                        ),
+                                        Text(
+                                          '${makanan.jumlah} - ${(makanan.kalori * makanan.jumlahAngka).toStringAsFixed(1)} kkal',
+                                          style: TextStyle(
+                                            color: Colors.grey.shade600,
+                                            fontSize: screenWidth * 0.035,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }).toList(),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // Action Buttons
+                Container(
+                  padding: EdgeInsets.all(screenWidth * 0.05),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade50,
+                    borderRadius: const BorderRadius.only(
+                      bottomLeft: Radius.circular(20),
+                      bottomRight: Radius.circular(20),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          style: OutlinedButton.styleFrom(
+                            padding: EdgeInsets.symmetric(
+                                vertical: screenWidth * 0.035),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text('Tutup'),
+                        ),
+                      ),
+                      SizedBox(width: screenWidth * 0.03),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                            _showDeleteConfirmation(context);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red,
+                            foregroundColor: Colors.white,
+                            padding: EdgeInsets.symmetric(
+                                vertical: screenWidth * 0.035),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text('Hapus'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildNutritionRow(
+      String label, String value, String unit, IconData icon, Color color) {
     return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: Column(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
         children: [
-          Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
-          Text(label, style: const TextStyle(fontSize: 10)),
+          Icon(icon, color: color, size: 16),
+          const SizedBox(width: 8),
+          Text('$label: '),
+          Text(
+            '$value $unit',
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
         ],
       ),
+    );
+  }
+
+  void _showDeleteConfirmation(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text('Konfirmasi Hapus'),
+          content: const Text('Apakah Anda yakin ingin menghapus data ini?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Batal'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                onDelete();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: const Text('Data berhasil dihapus'),
+                    backgroundColor: Colors.red,
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                );
+              },
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              child: const Text('Hapus'),
+            ),
+          ],
+        );
+      },
     );
   }
 }

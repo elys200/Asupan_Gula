@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
+import 'package:sweetsense/models/news_model.dart';
+
+// Import halaman
 import 'package:sweetsense/pages/landing_page.dart';
 import 'package:sweetsense/pages/onboarding_screen.dart';
 import 'package:sweetsense/pages/onboarding_screen2.dart';
@@ -16,14 +20,34 @@ import 'package:sweetsense/pages/favorite_recipe.dart';
 import 'package:sweetsense/pages/food.dart';
 import 'package:sweetsense/pages/news.dart';
 import 'package:sweetsense/pages/hitung.dart';
+import 'package:sweetsense/pages/food_detail.dart';
+import 'package:sweetsense/pages/news_detail.dart';
 import 'package:sweetsense/pages/jurnal.dart';
 
 
+// Import controller
+import 'package:sweetsense/controllers/authentication.dart';
+import 'package:sweetsense/controllers/profile_controller.dart';
+import 'package:sweetsense/controllers/food_controller.dart';
+import 'package:sweetsense/controllers/favorite_recipe_controller.dart';
+import 'package:sweetsense/controllers/news_controller.dart';
 
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
+void main() async {
+  // Pastikan flutter binding siap
+  WidgetsFlutterBinding.ensureInitialized();
 
+  // Load file .env
+  await dotenv.load(fileName: ".env");
 
-void main() {
+  // Inisialisasi controller
+  Get.put(AuthenticationController());
+  Get.put(ProfileController());
+  Get.put(FavoriteRecipeController());
+  Get.put(FoodController());
+  Get.put(NewsController());
+
   runApp(const SweetSense());
 }
 
@@ -32,37 +56,59 @@ class SweetSense extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return GetMaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Sweet Sense',
       theme: ThemeData(primarySwatch: Colors.blue),
       initialRoute: '/',
-      routes: {
-        '/': (context) => const LandingPage(),
-        '/onboarding_screen': (context) => const OnboardingScreen(),
-        '/onboarding_screen2': (context) => const OnboardingScreen2(),
-        '/onboarding_screen3': (context) => const OnboardingScreen3(),
-        '/welcome': (context) => const WelcomeScreen(),
-        '/register': (context) => const RegisterScreen(),
-        '/login': (context) => const LoginScreen(),
-        '/perhitungan_gula': (context) => const MainWithCurvedNav(initialIndex: 0),
-        '/dashboard': (context) => const MainWithCurvedNav(initialIndex: 1),
-        '/profile': (context) => const MainWithCurvedNav(initialIndex: 2),
-        '/edit_profile': (context) => const EditProfilePage(),
-        '/change_password': (context) => const ChangePasswordPage(),
-        '/favorite_recipe': (context) => const FavoriteRecipe(),
-        '/food': (context) => const FoodPage(),
-        '/news': (context) => const NewsPage(),
-        '/hitung': (context) => const HitungPage(),
-        '/jurnal': (context) => const JurnalPage(),
+      getPages: [
+        GetPage(name: '/', page: () => const LandingPage()),
+        GetPage(
+            name: '/onboarding_screen', page: () => const OnboardingScreen()),
+        GetPage(
+            name: '/onboarding_screen2', page: () => const OnboardingScreen2()),
+        GetPage(
+            name: '/onboarding_screen3', page: () => const OnboardingScreen3()),
+        GetPage(name: '/welcome', page: () => const WelcomeScreen()),
+        GetPage(name: '/register', page: () => const RegisterScreen()),
+        GetPage(name: '/login', page: () => const LoginScreen()),
+
+        // Curved Navigation Pages
+        GetPage(
+            name: '/perhitungan_gula',
+            page: () => const MainWithCurvedNav(initialIndex: 0)),
+        GetPage(
+            name: '/dashboard',
+            page: () => const MainWithCurvedNav(initialIndex: 1)),
+        GetPage(
+            name: '/profile',
+            page: () => const MainWithCurvedNav(initialIndex: 2)),
+
+        // Other Pages
+        GetPage(name: '/edit_profile', page: () => const EditProfilePage()),
+        GetPage(
+            name: '/change_password', page: () => const ChangePasswordPage()),
+        GetPage(name: '/favorite_recipe', page: () => const FavoriteRecipe()),
+        GetPage(name: '/food', page: () => const FoodPage()),
+        GetPage(name: '/news', page: () => const NewsPage()),
+        GetPage(name: '/hitung', page: () => const HitungPage()),
+        GetPage(name: '/hitung', page: () => const JurnalPage()),
 
 
-
-      },
+        //  Detail Pages
+        GetPage(
+            name: '/food_detail',
+            page: () => FoodDetailPage(food: Get.arguments)),
+        GetPage(
+          name: '/news_detail',
+          page: () => NewsDetailPage(news: Get.arguments as NewsModel),
+        ),
+      ],
     );
   }
 }
 
+// Navbar Curved Navigation
 class MainWithCurvedNav extends StatefulWidget {
   final int initialIndex;
   const MainWithCurvedNav({super.key, this.initialIndex = 0});
@@ -73,6 +119,7 @@ class MainWithCurvedNav extends StatefulWidget {
 
 class _MainWithCurvedNavState extends State<MainWithCurvedNav> {
   late int _currentIndex;
+
   final List<Widget> _pages = const [
     PerhitunganGulaPage(),
     DashboardScreen(),
@@ -88,18 +135,19 @@ class _MainWithCurvedNavState extends State<MainWithCurvedNav> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBody: true,
       body: _pages[_currentIndex],
       bottomNavigationBar: CurvedNavigationBar(
         index: _currentIndex,
         height: 60.0,
-        items: const <Widget>[
+        items: const [
           Icon(Icons.calculate, size: 30, color: Colors.white),
           Icon(Icons.home, size: 30, color: Colors.white),
           Icon(Icons.person, size: 30, color: Colors.white),
         ],
         color: const Color(0xFFE43A15),
         buttonBackgroundColor: const Color(0xFFE43A15),
-        backgroundColor: Colors.transparent,
+        backgroundColor: Colors.white,
         animationCurve: Curves.easeInOut,
         animationDuration: const Duration(milliseconds: 300),
         onTap: (index) {
