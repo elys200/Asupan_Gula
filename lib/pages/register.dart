@@ -52,12 +52,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
           // Main Content dengan Backend Integration
           SafeArea(
             child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.06),
+              padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.2),
               child: SingleChildScrollView(
                 padding: EdgeInsets.only(bottom: screenHeight * 0.2),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+                  children: [ 
                     SizedBox(height: screenHeight * 0.05),
 
                     // Title dengan responsive font
@@ -75,7 +75,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       controller: _usernameController,
                       hint: 'Nama Pengguna',
                     ),
-                    SizedBox(height: screenHeight * 0.025),
+                    SizedBox(height: screenHeight * 0.015),
 
                     // Email Field
                     CustomTextField(
@@ -83,7 +83,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       hint: 'Email',
                       keyboardType: TextInputType.emailAddress,
                     ),
-                    SizedBox(height: screenHeight * 0.025),
+                    SizedBox(height: screenHeight * 0.015),
 
                     // Umur Field
                     CustomTextField(
@@ -91,7 +91,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       hint: 'Umur',
                       keyboardType: TextInputType.number,
                     ),
-                    SizedBox(height: screenHeight * 0.025),
+                    SizedBox(height: screenHeight * 0.015),
 
                     // Berat Badan Field
                     CustomTextField(
@@ -99,11 +99,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       hint: 'Berat Badan (kg)',
                       keyboardType: TextInputType.number,
                     ),
-                    SizedBox(height: screenHeight * 0.025),
+                    SizedBox(height: screenHeight * 0.015),
 
                     // Gender Dropdown
                     _buildGenderDropdown(screenWidth),
-                    SizedBox(height: screenHeight * 0.025),
+                    SizedBox(height: screenHeight * 0.015),
 
                     // Password Field
                     CustomTextField(
@@ -111,7 +111,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       hint: 'Kata Sandi',
                       obscureText: true,
                     ),
-                    SizedBox(height: screenHeight * 0.025),
+                    SizedBox(height: screenHeight * 0.015),
 
                     // Confirm Password Field
                     CustomTextField(
