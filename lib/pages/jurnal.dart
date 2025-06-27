@@ -1,63 +1,70 @@
 import 'package:flutter/material.dart';
 
-class JurnalPage extends StatelessWidget {
+class JurnalPage extends StatefulWidget {
   const JurnalPage({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    final List<Map<String, dynamic>> jurnalData = [
-      {
-        'tanggal': 'Senin, 10 April 2025',
-        'status': 'Normal',
-        'statusColor': Colors.green,
-        'jam': '08:40 PM',
-        'kalori': '220',
-        'karbo': '50',
-        'lemak': '12',
-        'gula': '24',
-      },
-      {
-        'tanggal': 'Rabu, 12 April 2025',
-        'status': 'Low',
-        'statusColor': Colors.yellow,
-        'jam': '08:40 PM',
-        'kalori': '180',
-        'karbo': '40',
-        'lemak': '10',
-        'gula': '20',
-      },
-      {
-        'tanggal': 'Kamis, 13 April 2025',
-        'status': 'Normal',
-        'statusColor': Colors.green,
-        'jam': '08:40 PM',
-        'kalori': '225',
-        'karbo': '48',
-        'lemak': '11',
-        'gula': '23',
-      },
-      {
-        'tanggal': 'Sabtu, 15 April 2025',
-        'status': 'High',
-        'statusColor': Colors.red,
-        'jam': '08:40 PM',
-        'kalori': '298',
-        'karbo': '60',
-        'lemak': '15',
-        'gula': '30',
-      },
-      {
-        'tanggal': 'Minggu, 16 April 2025',
-        'status': 'High',
-        'statusColor': Colors.red,
-        'jam': '08:40 PM',
-        'kalori': '285',
-        'karbo': '55',
-        'lemak': '14',
-        'gula': '28',
-      },
-    ];
+  State<JurnalPage> createState() => _JurnalPageState();
+}
 
+class _JurnalPageState extends State<JurnalPage> {
+  String selectedFilter = "Weekly";
+
+  final List<Map<String, dynamic>> jurnalData = [
+    {
+      'tanggal': 'Senin, 10 April 2025',
+      'status': 'Normal',
+      'statusColor': Colors.green,
+      'jam': '08:40 PM',
+      'kalori': '220',
+      'karbo': '50',
+      'lemak': '12',
+      'gula': '24',
+    },
+    {
+      'tanggal': 'Rabu, 12 April 2025',
+      'status': 'Low',
+      'statusColor': Colors.yellow,
+      'jam': '08:40 PM',
+      'kalori': '180',
+      'karbo': '40',
+      'lemak': '10',
+      'gula': '20',
+    },
+    {
+      'tanggal': 'Kamis, 13 April 2025',
+      'status': 'Normal',
+      'statusColor': Colors.green,
+      'jam': '08:40 PM',
+      'kalori': '225',
+      'karbo': '48',
+      'lemak': '11',
+      'gula': '23',
+    },
+    {
+      'tanggal': 'Sabtu, 15 April 2025',
+      'status': 'High',
+      'statusColor': Colors.red,
+      'jam': '08:40 PM',
+      'kalori': '298',
+      'karbo': '60',
+      'lemak': '15',
+      'gula': '30',
+    },
+    {
+      'tanggal': 'Minggu, 16 April 2025',
+      'status': 'High',
+      'statusColor': Colors.red,
+      'jam': '08:40 PM',
+      'kalori': '285',
+      'karbo': '55',
+      'lemak': '14',
+      'gula': '28',
+    },
+  ];
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       bottomNavigationBar: BottomNavigationBar(
@@ -90,13 +97,13 @@ class JurnalPage extends StatelessWidget {
             width: double.infinity,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
+              children: const [
+                Text(
                   "Hi Mia",
                   style: TextStyle(color: Colors.white, fontSize: 16),
                 ),
-                const SizedBox(height: 4),
-                const Text(
+                SizedBox(height: 4),
+                Text(
                   "Rekam Jejak\nMakanmu",
                   style: TextStyle(
                     fontSize: 24,
@@ -111,11 +118,43 @@ class JurnalPage extends StatelessWidget {
             padding: const EdgeInsets.all(16.0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: const [
-                FilterButton(label: "Today", selected: false),
-                FilterButton(label: "Weekly", selected: true),
-                FilterButton(label: "Monthly", selected: false),
-                FilterButton(label: "Yearly", selected: false),
+              children: [
+                FilterButton(
+                  label: "Today",
+                  selected: selectedFilter == "Today",
+                  onTap: () {
+                    setState(() {
+                      selectedFilter = "Today";
+                    });
+                  },
+                ),
+                FilterButton(
+                  label: "Weekly",
+                  selected: selectedFilter == "Weekly",
+                  onTap: () {
+                    setState(() {
+                      selectedFilter = "Weekly";
+                    });
+                  },
+                ),
+                FilterButton(
+                  label: "Monthly",
+                  selected: selectedFilter == "Monthly",
+                  onTap: () {
+                    setState(() {
+                      selectedFilter = "Monthly";
+                    });
+                  },
+                ),
+                FilterButton(
+                  label: "Yearly",
+                  selected: selectedFilter == "Yearly",
+                  onTap: () {
+                    setState(() {
+                      selectedFilter = "Yearly";
+                    });
+                  },
+                ),
               ],
             ),
           ),
@@ -147,24 +186,34 @@ class JurnalPage extends StatelessWidget {
 class FilterButton extends StatelessWidget {
   final String label;
   final bool selected;
-  const FilterButton({required this.label, required this.selected, super.key});
+  final VoidCallback onTap;
+
+  const FilterButton({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-      decoration: BoxDecoration(
-        color: selected ? Colors.red : Colors.grey.shade200,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: selected
-            ? [BoxShadow(color: Colors.red.shade200, blurRadius: 4)]
-            : [],
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: selected ? Colors.white : Colors.black,
-          fontWeight: FontWeight.bold,
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        decoration: BoxDecoration(
+          color: selected ? Colors.red : Colors.grey.shade200,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: selected
+              ? [BoxShadow(color: Colors.red.shade200, blurRadius: 4)]
+              : [],
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: selected ? Colors.white : Colors.black,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
     );
@@ -218,7 +267,7 @@ class JurnalCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      Text("Status: "),
+                      const Text("Status: "),
                       Icon(Icons.circle, color: statusColor, size: 12),
                       const SizedBox(width: 4),
                       Text(status),
