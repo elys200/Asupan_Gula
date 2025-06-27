@@ -7,9 +7,6 @@ import '../controllers/profile_controller.dart';
 class NewsPage extends StatefulWidget {
   const NewsPage({super.key});
 
-  static const double cardWidth = 180;
-  static const double cardHeight = 210;
-
   @override
   State<NewsPage> createState() => _NewsPageState();
 }
@@ -26,10 +23,14 @@ class _NewsPageState extends State<NewsPage> {
   }
 
   Widget buildNewsCard(BuildContext context, NewsModel news) {
+    double screenWidth = MediaQuery.of(context).size.width;
+    double cardWidth = screenWidth * 0.5; // 60% of screen width
+
     return InkWell(
       onTap: () => Get.toNamed('/news_detail', arguments: news),
       child: Container(
-        width: NewsPage.cardWidth,
+        width: cardWidth,
+        margin: const EdgeInsets.only(left: 16),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
@@ -116,12 +117,12 @@ class _NewsPageState extends State<NewsPage> {
         ),
         const SizedBox(height: 8),
         SizedBox(
-          height: NewsPage.cardHeight,
+          height: 220,
           child: ListView.separated(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
             scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
             itemCount: filteredNews.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 12),
+            separatorBuilder: (_, __) => const SizedBox(width: 8),
             itemBuilder: (context, index) =>
                 buildNewsCard(context, filteredNews[index]),
           ),

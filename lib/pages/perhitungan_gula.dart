@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:intl/intl.dart';
+import 'package:intl/date_symbol_data_local.dart'; // Tambahkan import ini
 import 'jurnal.dart';
-import 'openfood_api.dart';
+import 'jurnal_entry.dart';
+import 'jurnal_service.dart';
+import 'package:sweetsense/api/openfood_api.dart';
+import 'package:sweetsense/api/usda_api.dart';
 
 class PerhitunganGulaPage extends StatefulWidget {
   const PerhitunganGulaPage({super.key});
@@ -14,11 +18,40 @@ class PerhitunganGulaPage extends StatefulWidget {
 class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
   String selectedWaktuMakan = 'Makan Siang';
   DateTime selectedDate = DateTime.now();
+  final JurnalService _jurnalService = JurnalService();
+  bool _isLocaleInitialized = false; // Tambahkan flag untuk tracking inisialisasi
 
   final List<Map<String, dynamic>> makananList = [
-    {'nama': 'Telur Rebus', 'jumlah': '2 sedang', 'kalori': 155.0, 'gula': 1.1},
-    {'nama': 'Salad Sayur', 'jumlah': '1 mangkok', 'kalori': 80.0, 'gula': 3.5},
-    {'nama': 'Dada ayam', 'jumlah': '150 gram', 'kalori': 165.0, 'gula': 0.0},
+    {
+      'nama': 'Telur Rebus',
+      'jumlah': '2 sedang',
+      'jumlahAngka': 2.0,
+      'kalori': 155.0,
+      'gula': 1.1,
+      'protein': 12.6,
+      'lemak': 10.6,
+      'karbohidrat': 1.1,
+    },
+    {
+      'nama': 'Salad Sayur',
+      'jumlah': '1 mangkok',
+      'jumlahAngka': 1.0,
+      'kalori': 80.0,
+      'gula': 3.5,
+      'protein': 2.0,
+      'lemak': 0.5,
+      'karbohidrat': 15.0,
+    },
+    {
+      'nama': 'Dada ayam',
+      'jumlah': '150 gram',
+      'jumlahAngka': 1.5,
+      'kalori': 165.0,
+      'gula': 0.0,
+      'protein': 31.0,
+      'lemak': 3.6,
+      'karbohidrat': 0.0,
+    },
   ];
 
   final waktuMakanOptions = [
@@ -50,6 +83,28 @@ class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
     'Kopi Hitam',
   ];
 
+  // Tambahkan method untuk inisialisasi locale
+  @override
+  void initState() {
+    super.initState();
+    _initializeLocale();
+  }
+
+  Future<void> _initializeLocale() async {
+    try {
+      await initializeDateFormatting('id_ID', null);
+      setState(() {
+        _isLocaleInitialized = true;
+      });
+    } catch (e) {
+      print('Error initializing locale: $e');
+      // Fallback jika locale id_ID tidak tersedia
+      setState(() {
+        _isLocaleInitialized = true;
+      });
+    }
+  }
+
   void _selectDate() async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -66,12 +121,12 @@ class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
   }
 
   void _tambahMakanan() {
-    String jumlahMakanan = '';
     final TextEditingController typeAheadController = TextEditingController();
+    final TextEditingController jumlahController = TextEditingController();
 
     showDialog(
       context: context,
-      builder: (context) {
+      builder: (contextDialog) {
         return AlertDialog(
           title: const Text('Tambah Makanan'),
           content: Column(
@@ -101,37 +156,52 @@ class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
               ),
               const SizedBox(height: 10),
               TextField(
-                decoration: const InputDecoration(labelText: 'Jumlah'),
-                onChanged: (value) => jumlahMakanan = value,
+                controller: jumlahController,
+                keyboardType: TextInputType.number,
+                decoration:
+                    const InputDecoration(labelText: 'Jumlah (dalam angka)'),
               ),
             ],
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => Navigator.pop(contextDialog),
               child: const Text('Batal'),
             ),
             ElevatedButton(
               onPressed: () async {
                 final String namaMakanan = typeAheadController.text.trim();
-                if (namaMakanan.isNotEmpty && jumlahMakanan.isNotEmpty) {
-                  Navigator.pop(context);
+                final String jumlahMakananStr = jumlahController.text.trim();
+                final double? jumlahAngka = double.tryParse(jumlahMakananStr);
 
-                  final hasil =
+                if (namaMakanan.isNotEmpty && jumlahAngka != null) {
+                  final currentContext = context;
+                  Navigator.pop(contextDialog);
+
+                  final hasilOFF =
                       await OpenFoodFactsAPI.fetchNutrisiMakanan(namaMakanan);
+                  final hasilUSDA =
+                      await USDAApi.fetchNutrisiMakanan(namaMakanan);
+                  final hasil = hasilOFF ?? hasilUSDA;
+
+                  if (!mounted) return;
 
                   setState(() {
                     makananList.add({
                       'nama': namaMakanan,
-                      'jumlah': jumlahMakanan,
+                      'jumlah': '$jumlahAngka porsi',
+                      'jumlahAngka': jumlahAngka,
                       'kalori': hasil?.kalori ?? 0.0,
                       'gula': hasil?.gula ?? 0.0,
+                      'protein': hasil?.protein ?? 0.0,
+                      'lemak': hasil?.lemak ?? 0.0,
+                      'karbohidrat': hasil?.karbohidrat ?? 0.0,
                     });
                   });
 
                   if (hasil != null) {
                     showDialog(
-                      context: context,
+                      context: currentContext,
                       builder: (_) => AlertDialog(
                         title: Text('Info Nutrisi: ${hasil.nama}'),
                         content: Column(
@@ -147,17 +217,21 @@ class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
                         ),
                         actions: [
                           TextButton(
-                            onPressed: () => Navigator.pop(context),
+                            onPressed: () => Navigator.pop(currentContext),
                             child: const Text('Tutup'),
                           ),
                         ],
                       ),
                     );
                   } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text('Data nutrisi tidak ditemukan')),
-                    );
+                    Future.delayed(const Duration(milliseconds: 200), () {
+                      if (mounted) {
+                        ScaffoldMessenger.of(currentContext).showSnackBar(
+                          const SnackBar(
+                              content: Text('Data nutrisi tidak ditemukan')),
+                        );
+                      }
+                    });
                   }
                 }
               },
@@ -197,6 +271,8 @@ class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
                     'Total Kalori: ${getTotalKalori().toStringAsFixed(1)} kkal'),
                 Text(
                     'Estimasi Gula: ${getTotalGula().toStringAsFixed(1)} gram'),
+                Text('Total Lemak: ${getTotalLemak().toStringAsFixed(1)} gram'),
+                Text('Total Karbo: ${getTotalKarbo().toStringAsFixed(1)} gram'),
                 const SizedBox(height: 20),
                 const Divider(),
                 const SizedBox(height: 10),
@@ -214,8 +290,9 @@ class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
                     Expanded(
                       child: ElevatedButton(
                         onPressed: () {
+                          _simpanDataJurnal();
                           Navigator.of(context).pop();
-                          Navigator.push(
+                          Navigator.pushReplacement(
                             context,
                             MaterialPageRoute(
                                 builder: (_) => const JurnalPage()),
@@ -236,6 +313,73 @@ class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
     );
   }
 
+  void _simpanDataJurnal() {
+    // Konversi makanan list ke MakananItem
+    final List<MakananItem> makananItems = makananList.map((item) {
+      return MakananItem(
+        nama: item['nama'] ?? '',
+        jumlah: item['jumlah'] ?? '',
+        jumlahAngka: (item['jumlahAngka'] ?? 0.0).toDouble(),
+        kalori: (item['kalori'] ?? 0.0).toDouble(),
+        gula: (item['gula'] ?? 0.0).toDouble(),
+        protein: (item['protein'] ?? 0.0).toDouble(),
+        lemak: (item['lemak'] ?? 0.0).toDouble(),
+        karbohidrat: (item['karbohidrat'] ?? 0.0).toDouble(),
+      );
+    }).toList();
+
+    // Hitung total nutrisi
+    final totalKalori = getTotalKalori();
+    final totalGula = getTotalGula();
+    final totalLemak = getTotalLemak();
+    final totalKarbo = getTotalKarbo();
+
+    // Tentukan status berdasarkan total gula
+    final status = JurnalService.getStatusFromGula(totalGula);
+    final statusColor = JurnalService.getStatusColor(status);
+
+    // Format tanggal dengan safe formatting
+    String formattedDate;
+    try {
+      if (_isLocaleInitialized) {
+        formattedDate = DateFormat('EEEE, dd MMMM yyyy', 'id_ID').format(selectedDate);
+      } else {
+        // Fallback ke format default jika locale belum ready
+        formattedDate = DateFormat('EEEE, dd MMMM yyyy').format(selectedDate);
+      }
+    } catch (e) {
+      // Fallback sederhana jika ada error
+      formattedDate = DateFormat('yyyy-MM-dd').format(selectedDate);
+    }
+    
+    final currentTime = DateFormat('HH:mm').format(DateTime.now());
+
+    // Buat jurnal entry baru
+    final newEntry = JurnalEntry(
+      tanggal: formattedDate,
+      waktuMakan: selectedWaktuMakan,
+      jam: '$currentTime PM',
+      makananList: makananItems,
+      totalKalori: totalKalori,
+      totalGula: totalGula,
+      totalKarbo: totalKarbo,
+      totalLemak: totalLemak,
+      status: status,
+      statusColor: statusColor,
+    );
+
+    // Simpan ke service
+    _jurnalService.addJurnalEntry(newEntry);
+
+    // Tampilkan snackbar konfirmasi
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Data berhasil disimpan ke jurnal'),
+        backgroundColor: Colors.green,
+      ),
+    );
+  }
+
   void _hapusMakanan(int index) {
     setState(() {
       makananList.removeAt(index);
@@ -243,11 +387,35 @@ class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
   }
 
   double getTotalKalori() {
-    return makananList.fold(0.0, (sum, item) => sum + (item['kalori'] ?? 0.0));
+    return makananList.fold(0.0, (sum, item) {
+      double kalori = item['kalori'] ?? 0.0;
+      double jumlah = item['jumlahAngka'] ?? 1.0;
+      return sum + (kalori * jumlah);
+    });
   }
 
   double getTotalGula() {
-    return makananList.fold(0.0, (sum, item) => sum + (item['gula'] ?? 0.0));
+    return makananList.fold(0.0, (sum, item) {
+      double gula = item['gula'] ?? 0.0;
+      double jumlah = item['jumlahAngka'] ?? 1.0;
+      return sum + (gula * jumlah);
+    });
+  }
+
+  double getTotalLemak() {
+    return makananList.fold(0.0, (sum, item) {
+      double lemak = item['lemak'] ?? 0.0;
+      double jumlah = item['jumlahAngka'] ?? 1.0;
+      return sum + (lemak * jumlah);
+    });
+  }
+
+  double getTotalKarbo() {
+    return makananList.fold(0.0, (sum, item) {
+      double karbo = item['karbohidrat'] ?? 0.0;
+      double jumlah = item['jumlahAngka'] ?? 1.0;
+      return sum + (karbo * jumlah);
+    });
   }
 
   @override
@@ -278,7 +446,7 @@ class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
           children: [
             Row(
               children: const [
@@ -372,9 +540,11 @@ class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
                   return Column(
                     children: [
                       ListTile(
-                        title: Text(item['nama']!),
+                        title: Text(item['nama'] ?? ''),
                         subtitle: Text(
-                          '${item['jumlah']} - ${item['kalori']?.toStringAsFixed(1)} kkal, ${item['gula']?.toStringAsFixed(1)} g gula',
+                          '${item['jumlah']} - '
+                          '${((item['kalori'] ?? 0.0) * (item['jumlahAngka'] ?? 1.0)).toStringAsFixed(1)} kkal, '
+                          '${((item['gula'] ?? 0.0) * (item['jumlahAngka'] ?? 1.0)).toStringAsFixed(1)} g gula',
                         ),
                         trailing: IconButton(
                           icon:

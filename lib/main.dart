@@ -31,7 +31,15 @@ import 'package:sweetsense/controllers/food_controller.dart';
 import 'package:sweetsense/controllers/favorite_recipe_controller.dart';
 import 'package:sweetsense/controllers/news_controller.dart';
 
-void main() {
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
+void main() async {
+  // Pastikan flutter binding siap
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Load file .env
+  await dotenv.load(fileName: ".env");
+
   // Inisialisasi controller
   Get.put(AuthenticationController());
   Get.put(ProfileController());
