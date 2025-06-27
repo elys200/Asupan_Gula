@@ -1,52 +1,85 @@
 import 'package:flutter/material.dart';
+import 'dart:math';
 
-class OnboardingScreen2 extends StatelessWidget {
+class OnboardingScreen2 extends StatefulWidget {
   const OnboardingScreen2({super.key});
 
   @override
+  State<OnboardingScreen2> createState() => _OnboardingScreen2State();
+}
+
+class _OnboardingScreen2State extends State<OnboardingScreen2>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _sweepAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+
+    _sweepAnimation = Tween<double>(
+      begin: 0.0,
+      end: 4 * pi / 3, // 240 derajat
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
+
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size; // Screen size for responsiveness
+    final size = MediaQuery.of(context).size;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFF3D00),
       body: SafeArea(
-        child: Column(
+        child: Stack(
           children: [
-            const SizedBox(height: 10),
-            Expanded(
-              flex: 4,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Image.asset(
-                    'assets/images/orang2.png',
-                    height: size.height * 0.35,
-                    fit: BoxFit.contain,
-                  ),
-                  const SizedBox(height: 10),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _dot(isActive: false),
-                      _dot(isActive: true),
-                      _dot(isActive: false),
-                    ],
-                  ),
-                ],
+            // Background gradient
+            Container(
+              height: size.height,
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFFFF512F), Color(0xFFFF3D00)],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
               ),
             ),
 
-            Expanded(
-              flex: 4,
+            // Gambar karakter
+            Positioned(
+              top: size.height * 0.14,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Image.asset(
+                  'assets/images/orang2.png',
+                  height: size.height * 0.35,
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ),
+
+            // Container putih bagian bawah
+            Positioned(
+              top: size.height * 0.42,
+              left: 0,
+              right: 0,
               child: Container(
-                width: double.infinity,
+                height: size.height * 0.58,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
                 decoration: const BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
-                ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 28,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -54,14 +87,14 @@ class OnboardingScreen2 extends StatelessWidget {
                     const Text(
                       'Keep Healthy',
                       style: TextStyle(
-                        fontSize: 24,
+                        fontSize: 26,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     const Text(
                       'Work-Life Balance',
                       style: TextStyle(
-                        fontSize: 24,
+                        fontSize: 26,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -74,27 +107,60 @@ class OnboardingScreen2 extends StatelessWidget {
                         ),
                       ),
                     ),
-                    Align(
-                      alignment: Alignment.bottomRight,
-                      child: GestureDetector(
-                        onTap: () {
-                          Navigator.pushNamed(context, '/onboarding_screen3');
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFFF3D00),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.arrow_forward,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
                   ],
                 ),
+              ),
+            ),
+
+            // Dot indikator
+            Positioned(
+              top: size.height * 0.6,
+              left: 0,
+              right: 0,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _dot(isActive: false),
+                  _dot(isActive: true),
+                  _dot(isActive: false),
+                ],
+              ),
+            ),
+
+            // Tombol next dengan arc animated
+            Positioned(
+              bottom: 40,
+              right: 24,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  SizedBox(
+                    width: 80,
+                    height: 80,
+                    child: AnimatedBuilder(
+                      animation: _controller,
+                      builder: (context, child) {
+                        return CustomPaint(
+                          painter: AnimatedArcPainter(sweep: _sweepAnimation.value),
+                        );
+                      },
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.pushNamed(context, '/onboarding_screen3');
+                    },
+                    child: Container(
+                      width: 56,
+                      height: 56,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFFF3D00),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.arrow_forward, color: Colors.white),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -103,6 +169,7 @@ class OnboardingScreen2 extends StatelessWidget {
     );
   }
 
+  // Dot indikator
   Widget _dot({required bool isActive}) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 4),
@@ -113,5 +180,33 @@ class OnboardingScreen2 extends StatelessWidget {
         shape: BoxShape.circle,
       ),
     );
+  }
+}
+
+// CustomPainter untuk animasi arc
+class AnimatedArcPainter extends CustomPainter {
+  final double sweep;
+
+  AnimatedArcPainter({required this.sweep});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = const Color(0xFFFF3D00)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3;
+
+    final rect = Rect.fromCircle(
+      center: Offset(size.width / 2, size.height / 2),
+      radius: 35,
+    );
+
+    const double startAngle = -pi / 2; // dari atas
+    canvas.drawArc(rect, startAngle, sweep, false, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant AnimatedArcPainter oldDelegate) {
+    return oldDelegate.sweep != sweep;
   }
 }

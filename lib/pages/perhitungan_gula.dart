@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart'; // Tambahkan import ini
-import 'jurnal.dart';
+import 'package:sweetsense/pages/jurnal.dart';
 import 'jurnal_entry.dart';
 import 'jurnal_service.dart';
 import 'package:sweetsense/api/openfood_api.dart';
