@@ -6,7 +6,7 @@ import '../models/news_model.dart';
 class NewsController {
   // Mendapatkan semua berita
   static Future<List<NewsModel>> getAllNews() async {
-    final uri = Uri.parse('${url}berita');
+    final uri = Uri.parse('${url}berita-all');
     final response = await http.get(uri);
 
     if (response.statusCode == 200) {

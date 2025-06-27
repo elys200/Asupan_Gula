@@ -95,7 +95,15 @@ class NewsModel {
   /// URL gambar yang sudah lengkap
   String? get fotoUrl {
     if (gambar == null || gambar!.isEmpty) return null;
+
+    // Jika sudah URL lengkap, langsung return
     if (gambar!.startsWith('http')) return gambar;
-    return '${url.replaceFirst('/api/v1', '/storage/')}$gambar';
+
+    //
+    final baseUrl = url.replaceFirst('/api/v1', '/storage/');
+    final cleanGambar =
+        gambar!.startsWith('/') ? gambar!.substring(1) : gambar!;
+
+    return '$baseUrl$cleanGambar';
   }
 }

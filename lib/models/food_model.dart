@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:sweetsense/constants/constants.dart';
 
 class FoodModel {
   final int id;
@@ -66,7 +65,7 @@ class FoodModel {
       kadarGula: parseDouble(json['kadar_gula']),
       bahan: parseStringList(json['bahan']),
       tips: parseStringList(json['tips']),
-      gambar: json['gambar'],
+      gambar: json['foto_url'], // sudah berisi URL lengkap dari Laravel
       createdAt: DateTime.parse(json['created_at']),
       updatedAt: DateTime.parse(json['updated_at']),
     );
@@ -90,9 +89,6 @@ class FoodModel {
     };
   }
 
-  String? get fotoUrl {
-    if (gambar == null || gambar!.isEmpty) return null;
-    if (gambar!.startsWith('http')) return gambar;
-    return '${url.replaceFirst('/api/v1', '/storage/')}$gambar';
-  }
+  /// Optional getter kalau kamu masih ingin pakai nama lain
+  String? get fotoUrl => gambar;
 }

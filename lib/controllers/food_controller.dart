@@ -4,30 +4,48 @@ import '../constants/constants.dart';
 import '../models/food_model.dart';
 
 class FoodController {
-  // Mendapatkan semua resep makanan
+  // Ambil semua resep makanan (untuk halaman food)
   static Future<List<FoodModel>> getAllFoods() async {
-    final uri = Uri.parse('${url}resep');
+    final uri = Uri.parse('${url}resep-all');
     final response = await http.get(uri);
 
     if (response.statusCode == 200) {
-      final List<dynamic> jsonList = jsonDecode(response.body);
-
-      return jsonList.map((json) => FoodModel.fromJson(json)).toList();
+      final List<dynamic> dataList = jsonDecode(response.body);
+      return dataList.map((jsonItem) => FoodModel.fromJson(jsonItem)).toList();
     } else {
       throw Exception('Gagal memuat daftar resep makanan');
     }
   }
 
-  // Mendapatkan satu resep makanan berdasarkan ID
+  // Ambil satu resep makanan berdasarkan ID
   static Future<FoodModel> getFoodById(int id) async {
     final uri = Uri.parse('${url}resep/$id');
     final response = await http.get(uri);
 
     if (response.statusCode == 200) {
       final Map<String, dynamic> jsonData = jsonDecode(response.body);
-      return FoodModel.fromJson(jsonData);
+
+      // Ambil hanya bagian "data" dari respons API
+      if (jsonData.containsKey('data')) {
+        return FoodModel.fromJson(jsonData['data']);
+      } else {
+        throw Exception('Format data tidak sesuai');
+      }
     } else {
       throw Exception('Gagal memuat detail resep dengan ID $id');
+    }
+  }
+
+  // Tambahan: Ambil 3 resep terbaru untuk dashboard
+  static Future<List<FoodModel>> getTop3Foods() async {
+    final uri = Uri.parse('${url}resep-terbaru');
+    final response = await http.get(uri);
+
+    if (response.statusCode == 200) {
+      final List<dynamic> dataList = jsonDecode(response.body);
+      return dataList.map((jsonItem) => FoodModel.fromJson(jsonItem)).toList();
+    } else {
+      throw Exception('Gagal memuat 3 resep terbaru');
     }
   }
 }
