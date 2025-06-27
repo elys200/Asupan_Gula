@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:sweetsense/controllers/authentication.dart';
@@ -20,62 +21,45 @@ class _LoginScreenState extends State<LoginScreen> {
     final screenWidth = MediaQuery.of(context).size.width;
 
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       body: Stack(
-        fit: StackFit.expand,
         children: [
-          // TOP CURVE
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: ClipPath(
-              clipper: TopCurveClipper(),
-              child: Container(
-                height: screenHeight * 0.1,
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Color(0xFFE43A15), Color(0xFFE65245)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+          // TOP CURVED BACKGROUND
+          ClipPath(
+            clipper: CurvedTopClipper(),
+            child: Container(
+              height: screenHeight * 0.25,
+              width: double.infinity,
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFFE43A15), Color(0xFFE65245)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
-                child: Opacity(
-                  opacity: 0.2,
-                  child: Image.asset(
+              ),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Image.asset(
                     'assets/images/food3.png',
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                    color: Colors.white.withOpacity(0.07),
+                    colorBlendMode: BlendMode.srcATop,
                   ),
-                ),
+                ],
               ),
             ),
           ),
 
-          // BOTTOM CURVE
+          // BOTTOM BACKGROUND IMAGE
           Positioned(
             bottom: 0,
-            left: 0,
+            left: -5,
             right: 0,
-            child: ClipPath(
-              clipper: BottomCurveClipper(),
-              child: Container(
-                height: screenHeight * 0.2,
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Color(0xFFE43A15), Color(0xFFE65245)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                ),
-                child: Opacity(
-                  opacity: 0.2,
-                  child: Image.asset(
-                    'assets/images/food3.png',
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-                  ),
-                ),
-              ),
+            child: Image.asset(
+              'assets/images/bottom_clip.png',
+              fit: BoxFit.cover,
+              height: screenHeight * 0.3,
             ),
           ),
 
@@ -83,110 +67,125 @@ class _LoginScreenState extends State<LoginScreen> {
           SafeArea(
             child: Padding(
               padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.06),
-              child: SingleChildScrollView(
-                padding: EdgeInsets.only(bottom: screenHeight * 0.2),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.arrow_back),
-                      onPressed: () => Navigator.pop(context),
-                    ),
-                    SizedBox(height: screenHeight * 0.1),
-                    Text(
-                      'Login',
-                      style: TextStyle(
-                        fontSize: screenWidth * 0.08,
-                        fontWeight: FontWeight.bold,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(height: screenHeight * 0.02),
+                  Align(
+                    alignment: Alignment.topLeft,
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: InkWell(
+                        onTap: () => Get.offAllNamed('/welcome'),
+                        borderRadius: BorderRadius.circular(20),
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: const Icon(Icons.chevron_left,
+                              color: Colors.white, size: 24),
+                        ),
                       ),
                     ),
-                    SizedBox(height: screenHeight * 0.04),
-                    CustomTextField(
-                      hint: 'Username',
-                      controller: usernameController,
+                  ),
+                  SizedBox(height: screenHeight * 0.17),
+                  Text(
+                    'Login',
+                    style: TextStyle(
+                      fontSize: screenWidth * 0.08,
+                      fontWeight: FontWeight.bold,
                     ),
-                    SizedBox(height: screenHeight * 0.025),
-                    CustomTextField(
-                      hint: 'Password',
-                      controller: passwordController,
-                      obscureText: true,
-                    ),
-                    SizedBox(height: screenHeight * 0.05),
-                    Center(
-                      child: ElevatedButton(
-                        onPressed: () async {
-                          final username = usernameController.text.trim();
-                          final password = passwordController.text.trim();
+                  ),
+                  SizedBox(height: screenHeight * 0.035),
+                  CustomTextField(
+                    hint: 'Username',
+                    controller: usernameController,
+                  ),
+                  SizedBox(height: screenHeight * 0.025),
+                  CustomTextField(
+                    hint: 'Password',
+                    controller: passwordController,
+                    obscureText: true,
+                  ),
+                  SizedBox(height: screenHeight * 0.04),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        final username = usernameController.text.trim();
+                        final password = passwordController.text.trim();
 
-                          if (username.isEmpty || password.isEmpty) {
-                            Get.snackbar(
-                              'Login Gagal',
-                              'Username dan password tidak boleh kosong',
-                              backgroundColor: Colors.redAccent,
-                              colorText: Colors.white,
-                            );
-                            return;
-                          }
-
-                          final result = await _authController.login(
-                            username: username,
-                            password: password,
+                        if (username.isEmpty || password.isEmpty) {
+                          Get.snackbar(
+                            'Login Gagal',
+                            'Username dan password tidak boleh kosong',
+                            backgroundColor: Colors.redAccent,
+                            colorText: Colors.white,
                           );
+                          return;
+                        }
 
-                          if (result != null) {
-                            Get.offAllNamed('/dashboard');
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFFF5858),
-                          padding: EdgeInsets.symmetric(
-                            horizontal: screenWidth * 0.2,
-                            vertical: screenHeight * 0.018,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius.circular(screenWidth * 0.03),
-                          ),
-                          elevation: 5,
+                        final result = await _authController.login(
+                          username: username,
+                          password: password,
+                        );
+
+                        if (result != null) {
+                          Get.offAllNamed('/dashboard');
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFFF5858),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: screenWidth * 0.12,
+                          vertical: screenHeight * 0.011,
                         ),
-                        child: Text(
-                          'Login',
+                        shape: RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.circular(screenWidth * 0.03),
+                        ),
+                        elevation: 5,
+                      ),
+                      child: Text(
+                        'Login',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: screenWidth * 0.04,
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: screenHeight * 0.01),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: GestureDetector(
+                      onTap: () {
+                        Navigator.pushNamed(context, '/register');
+                      },
+                      child: Text.rich(
+                        TextSpan(
+                          text: "Belum memiliki akun? ",
                           style: TextStyle(
-                            color: Colors.white,
                             fontSize: screenWidth * 0.04,
                           ),
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: screenHeight * 0.025),
-                    Center(
-                      child: GestureDetector(
-                        onTap: () {
-                          Navigator.pushNamed(context, '/register');
-                        },
-                        child: Text.rich(
-                          TextSpan(
-                            text: "Don’t have an account yet? ",
-                            style: TextStyle(
-                              fontSize: screenWidth * 0.035,
-                            ),
-                            children: [
-                              TextSpan(
-                                text: 'Sign Up',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  decoration: TextDecoration.underline,
-                                  color: Colors.black,
-                                  fontSize: screenWidth * 0.035,
-                                ),
+                          children: [
+                            TextSpan(
+                              text: 'Daftar \n Sekarang',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                decoration: TextDecoration.underline,
+                                color: Colors.black,
+                                fontSize: screenWidth * 0.04,
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -196,6 +195,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 }
 
+// Reusable Text Field Widget
 class CustomTextField extends StatefulWidget {
   final String hint;
   final TextEditingController controller;
@@ -224,95 +224,65 @@ class _CustomTextFieldState extends State<CustomTextField> {
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
 
-    return TextField(
-      controller: widget.controller,
-      obscureText: _obscure,
-      decoration: InputDecoration(
-        hintText: widget.hint,
-        filled: true,
-        fillColor: const Color(0xFFF5F5F5),
-        contentPadding: EdgeInsets.symmetric(
-          horizontal: screenWidth * 0.05,
-          vertical: screenHeight * 0.02,
+    return SizedBox(
+      height: 45,
+      child: TextField(
+        controller: widget.controller,
+        obscureText: _obscure,
+        style: const TextStyle(fontSize: 14),
+        decoration: InputDecoration(
+          hintText: widget.hint,
+          filled: true,
+          fillColor: const Color(0xFFF5F5F5),
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: screenWidth * 0.04,
+            vertical: 10,
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+          ),
+          suffixIcon: widget.obscureText
+              ? IconButton(
+                  icon: Icon(
+                    _obscure ? Icons.visibility_off : Icons.visibility,
+                    color: Colors.grey,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _obscure = !_obscure;
+                    });
+                  },
+                )
+              : null,
         ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(screenWidth * 0.05),
-          borderSide: BorderSide.none,
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(screenWidth * 0.05),
-          borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
-        ),
-        suffixIcon: widget.obscureText
-            ? IconButton(
-                icon: Icon(
-                  _obscure ? Icons.visibility_off : Icons.visibility,
-                  color: Colors.grey,
-                ),
-                onPressed: () {
-                  setState(() {
-                    _obscure = !_obscure;
-                  });
-                },
-              )
-            : null,
       ),
     );
   }
 }
 
-// Curved Background
-class TopCurveClipper extends CustomClipper<Path> {
+// Lengkungan atas seperti register
+class CurvedTopClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
-    Path path = Path();
-    path.lineTo(0, size.height - 5);
-    path.quadraticBezierTo(
-      size.width / 2,
-      size.height + 10,
-      size.width,
-      size.height - 5,
-    );
-    path.lineTo(size.width, 0);
+    final roundingHeight = size.height * 3 / 5;
+    final filledRectangle =
+        Rect.fromLTRB(0, 0, size.width, size.height - roundingHeight);
+    final roundingRectangle = Rect.fromLTRB(
+        -5, size.height - roundingHeight * 2, size.width + 5, size.height);
+
+    final path = Path();
+    path.addRect(filledRectangle);
+    path.arcTo(roundingRectangle, pi, -pi, true);
     path.close();
     return path;
   }
 
   @override
-  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
-}
-
-class BottomCurveClipper extends CustomClipper<Path> {
-  @override
-  Path getClip(Size size) {
-    Path path = Path();
-    path.moveTo(0, size.height * 0.2);
-    path.quadraticBezierTo(
-      size.width * 0.25,
-      size.height * 0.5,
-      size.width * 0.4,
-      size.height * 0.4,
-    );
-    path.quadraticBezierTo(
-      size.width * 0.55,
-      size.height * 0.36,
-      size.width * 0.65,
-      size.height * 0.35,
-    );
-    path.quadraticBezierTo(
-      size.width * 0.9,
-      size.height * 0.5,
-      size.width,
-      size.height,
-    );
-    path.lineTo(size.width, size.height);
-    path.lineTo(0, size.height);
-    path.close();
-    return path;
-  }
-
-  @override
-  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
+  bool shouldReclip(CustomClipper<Path> oldClipper) => true;
 }

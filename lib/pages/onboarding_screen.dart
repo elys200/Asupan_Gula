@@ -92,7 +92,8 @@ class _OnboardingScreenState extends State<OnboardingScreen>
               right: 0,
               child: Container(
                 height: size.height * 0.58,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
                 decoration: const BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
@@ -101,9 +102,11 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text('Keep Healthy',
-                        style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
+                        style: TextStyle(
+                            fontSize: 26, fontWeight: FontWeight.bold)),
                     const Text('Work-Life Balance',
-                        style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
+                        style: TextStyle(
+                            fontSize: 26, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 12),
                     const Expanded(
                       child: SingleChildScrollView(
@@ -157,11 +160,13 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                   GestureDetector(
                     onTap: () {
                       if (widget.progressStep == 1) {
-                        Navigator.pushNamed(context, '/onboarding_screen2');
+                        Navigator.pushNamedAndRemoveUntil(
+                            context, '/onboarding_screen2', (route) => false);
                       } else if (widget.progressStep == 2) {
-                        Navigator.pushNamed(context, '/onboarding_screen3');
+                        Navigator.pushNamedAndRemoveUntil(
+                            context, '/onboarding_screen3', (route) => false);
                       } else {
-                        Navigator.pushNamed(context, '/home');
+                        Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
                       }
                     },
                     child: Container(
@@ -171,7 +176,8 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                         color: Color(0xFFFF3D00),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.arrow_forward, color: Colors.white),
+                      child:
+                          const Icon(Icons.arrow_forward, color: Colors.white),
                     ),
                   ),
                 ],

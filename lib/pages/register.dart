@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:sweetsense/controllers/authentication.dart';
@@ -10,7 +11,6 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
-  // Controllers
   final _usernameController = TextEditingController();
   final _emailController = TextEditingController();
   final _umurController = TextEditingController();
@@ -34,104 +34,128 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Get screen dimensions untuk responsive layout
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
 
     return Scaffold(
-      resizeToAvoidBottomInset: true,
+      resizeToAvoidBottomInset: false,
       body: Stack(
-        fit: StackFit.expand,
         children: [
-          // Background Atas (Frontend Baru)
-          _buildTopCurveBackground(screenHeight),
-
-          // Background Bawah (Frontend Baru)
-          _buildBottomCurveBackground(screenHeight),
-
-          // Main Content dengan Backend Integration
-          SafeArea(
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.2),
-              child: SingleChildScrollView(
-                padding: EdgeInsets.only(bottom: screenHeight * 0.2),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [ 
-                    SizedBox(height: screenHeight * 0.05),
-
-                    // Title dengan responsive font
-                    Text(
-                      'Register',
-                      style: TextStyle(
-                        fontSize: screenWidth * 0.08,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    SizedBox(height: screenHeight * 0.04),
-
-                    // Username Field
-                    CustomTextField(
-                      controller: _usernameController,
-                      hint: 'Nama Pengguna',
-                    ),
-                    SizedBox(height: screenHeight * 0.015),
-
-                    // Email Field
-                    CustomTextField(
-                      controller: _emailController,
-                      hint: 'Email',
-                      keyboardType: TextInputType.emailAddress,
-                    ),
-                    SizedBox(height: screenHeight * 0.015),
-
-                    // Umur Field
-                    CustomTextField(
-                      controller: _umurController,
-                      hint: 'Umur',
-                      keyboardType: TextInputType.number,
-                    ),
-                    SizedBox(height: screenHeight * 0.015),
-
-                    // Berat Badan Field
-                    CustomTextField(
-                      controller: _beratBadanController,
-                      hint: 'Berat Badan (kg)',
-                      keyboardType: TextInputType.number,
-                    ),
-                    SizedBox(height: screenHeight * 0.015),
-
-                    // Gender Dropdown
-                    _buildGenderDropdown(screenWidth),
-                    SizedBox(height: screenHeight * 0.015),
-
-                    // Password Field
-                    CustomTextField(
-                      controller: _passwordController,
-                      hint: 'Kata Sandi',
-                      obscureText: true,
-                    ),
-                    SizedBox(height: screenHeight * 0.015),
-
-                    // Confirm Password Field
-                    CustomTextField(
-                      controller: _confirmPasswordController,
-                      hint: 'Konfirmasi Kata Sandi',
-                      obscureText: true,
-                    ),
-                    SizedBox(height: screenHeight * 0.05),
-
-                    // Register Button dengan Backend Integration
-                    _buildRegisterButton(screenWidth, screenHeight),
-                  ],
+          // Background Lengkung Atas
+          ClipPath(
+            clipper: CurvedTopClipper(),
+            child: Container(
+              height: screenHeight * 0.20,
+              width: double.infinity,
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFFE43A15), Color(0xFFE65245)],
                 ),
               ),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Image.asset(
+                    'assets/images/food3.png',
+                    fit: BoxFit.cover,
+                    color: Colors.white.withOpacity(0.07),
+                    colorBlendMode: BlendMode.srcATop,
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // Background Bawah
+          Positioned(
+            bottom: 0,
+            left: -20,
+            right: 0,
+            child: Image.asset(
+              'assets/images/bottom_clip.png',
+              fit: BoxFit.cover,
+              height: screenHeight * 0.2,
+            ),
+          ),
+
+          // Content utama
+          SafeArea(
+            child: Column(
+              children: [
+                SizedBox(height: screenHeight * 0.17),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.2),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Register',
+                      style: TextStyle(
+                        fontSize: screenWidth * 0.06,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(height: screenHeight * 0.015),
+                // Form area
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: screenWidth * 0.19,
+                      vertical: screenHeight * 0,
+                    ),
+                    child: Column(
+                      children: [
+                        SizedBox(height: screenHeight * 0.02),
+                        _buildCompactTextField(
+                            hint: 'Nama Pengguna',
+                            controller: _usernameController),
+                        SizedBox(height: screenHeight * 0.015),
+                        _buildCompactTextField(
+                            hint: 'Email',
+                            controller: _emailController,
+                            keyboardType: TextInputType.emailAddress),
+                        SizedBox(height: screenHeight * 0.015),
+                        _buildCompactTextField(
+                            hint: 'Umur',
+                            controller: _umurController,
+                            keyboardType: TextInputType.number),
+                        SizedBox(height: screenHeight * 0.015),
+                        _buildCompactTextField(
+                            hint: 'Berat Badan (kg)',
+                            controller: _beratBadanController,
+                            keyboardType: TextInputType.number),
+                        SizedBox(height: screenHeight * 0.015),
+                        _buildCompactGenderDropdown(),
+                        SizedBox(height: screenHeight * 0.015),
+                        _buildCompactTextField(
+                            hint: 'Kata Sandi',
+                            controller: _passwordController,
+                            obscureText: true),
+                        SizedBox(height: screenHeight * 0.015),
+                        _buildCompactTextField(
+                            hint: 'Konfirmasi Kata Sandi',
+                            controller: _confirmPasswordController,
+                            obscureText: true),
+                        SizedBox(height: screenHeight * 0.03),
+                        _buildRegisterButton(screenWidth, screenHeight),
+                        SizedBox(
+                            height: screenHeight *
+                                0.1),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
 
           // Tombol Kembali
           Positioned(
-            top: MediaQuery.of(context).padding.top + 8,
+            top: MediaQuery.of(context).padding.top + 16,
             left: 16,
             child: Material(
               color: Colors.transparent,
@@ -139,16 +163,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 onTap: () => Get.offAllNamed('/welcome'),
                 borderRadius: BorderRadius.circular(20),
                 child: Container(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: const Icon(
-                    Icons.chevron_left,
-                    color: Colors.white,
-                    size: 28,
-                  ),
+                  child: const Icon(Icons.chevron_left,
+                      color: Colors.white, size: 24),
                 ),
               ),
             ),
@@ -158,98 +179,91 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  Widget _buildTopCurveBackground(double screenHeight) {
-    return Positioned(
-      top: 0,
-      left: 0,
-      right: 0,
-      child: ClipPath(
-        clipper: TopCurveClipper(),
-        child: Container(
-          height: screenHeight * 0.15,
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFFE43A15), Color(0xFFE65245)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
+  // TextField yang lebih kompak
+  Widget _buildCompactTextField({
+    required String hint,
+    required TextEditingController controller,
+    bool obscureText = false,
+    TextInputType? keyboardType,
+  }) {
+    return SizedBox(
+      height: 40,
+      child: TextField(
+        controller: controller,
+        obscureText: obscureText,
+        keyboardType: keyboardType,
+        style: const TextStyle(fontSize: 14),
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: TextStyle(fontSize: 14, color: Colors.grey[600]),
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16, vertical: 12),
+          border: OutlineInputBorder(
+            borderRadius:
+                BorderRadius.circular(15),
+            borderSide: const BorderSide(color: Color(0xFFE43A15), width: 1),
           ),
-          child: Opacity(
-            opacity: 0.2,
-            child: Image.asset(
-              'assets/images/food3.png',
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) =>
-                  const SizedBox.shrink(),
-            ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15),
+            borderSide: const BorderSide(color: Color(0xFFE43A15), width: 1),
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBottomCurveBackground(double screenHeight) {
-    return Positioned(
-      bottom: 0,
-      left: 0,
-      right: 0,
-      child: ClipPath(
-        clipper: BottomCurveClipper(),
-        child: Container(
-          height: screenHeight * 0.2,
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFFE43A15), Color(0xFFE65245)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
-          child: Opacity(
-            opacity: 0.2,
-            child: Image.asset(
-              'assets/images/food3.png',
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) =>
-                  const SizedBox.shrink(),
-            ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15),
+            borderSide: const BorderSide(color: Color(0xFFE43A15), width: 1.5),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildGenderDropdown(double screenWidth) {
-    return DropdownButtonFormField<String>(
-      value: _selectedGender,
-      items: const [
-        DropdownMenuItem(value: 'Pria', child: Text('Pria')),
-        DropdownMenuItem(value: 'Wanita', child: Text('Wanita')),
-      ],
-      onChanged: (value) => setState(() => _selectedGender = value),
-      decoration: InputDecoration(
-        hintText: 'Jenis Kelamin',
-        filled: true,
-        fillColor: const Color(0xFFF5F5F5),
-        contentPadding: EdgeInsets.symmetric(
-          horizontal: screenWidth * 0.05,
-          vertical: 16,
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(screenWidth * 0.05),
-          borderSide: BorderSide.none,
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(screenWidth * 0.05),
-          borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+  // Dropdown jenis kelamin
+  Widget _buildCompactGenderDropdown() {
+    return SizedBox(
+      height: 45,
+      child: DropdownButtonFormField<String>(
+        value: _selectedGender,
+        items: const [
+          DropdownMenuItem(
+              value: 'Pria',
+              child: Text('Pria', style: TextStyle(fontSize: 14))),
+          DropdownMenuItem(
+              value: 'Wanita',
+              child: Text('Wanita', style: TextStyle(fontSize: 14))),
+        ],
+        onChanged: (value) => setState(() => _selectedGender = value),
+        style: const TextStyle(fontSize: 14, color: Colors.black),
+        decoration: InputDecoration(
+          hintText: 'Jenis Kelamin',
+          hintStyle: TextStyle(fontSize: 14, color: Colors.grey[600]),
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15),
+            borderSide: const BorderSide(color: Color(0xFFE43A15), width: 1),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15),
+            borderSide: const BorderSide(color: Color(0xFFE43A15), width: 1),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15),
+            borderSide: const BorderSide(color: Color(0xFFE43A15), width: 1.5),
+          ),
         ),
       ),
     );
   }
 
+  // Tombol register
   Widget _buildRegisterButton(double screenWidth, double screenHeight) {
-    return Center(
+    return Align(
+      alignment: Alignment.centerLeft,
       child: SizedBox(
-        width: screenWidth * 0.5,
+        width: screenWidth * 0.3,
         height: screenHeight * 0.06,
         child: Obx(() {
           return _authController.isLoading.value
@@ -282,8 +296,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  // Backend Logic
   Future<void> _onRegisterPressed() async {
+    // Validasi dan panggil controller
     final username = _usernameController.text.trim();
     final email = _emailController.text.trim();
     final umurStr = _umurController.text.trim();
@@ -292,7 +306,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final password = _passwordController.text.trim();
     final confirmPassword = _confirmPasswordController.text.trim();
 
-    // Validasi field kosong
     if ([
       username,
       email,
@@ -302,41 +315,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
       password,
       confirmPassword
     ].contains('')) {
-      Get.snackbar(
-        'Error',
-        'Harap lengkapi semua field!',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      Get.snackbar('Error', 'Harap lengkapi semua field!',
+          backgroundColor: Colors.red, colorText: Colors.white);
       return;
     }
 
-    // Validasi numeric fields
     final umur = int.tryParse(umurStr);
     final beratBadan = int.tryParse(beratStr);
 
     if (umur == null || beratBadan == null) {
-      Get.snackbar(
-        'Error',
-        'Umur dan Berat Badan harus berupa angka!',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      Get.snackbar('Error', 'Umur dan Berat Badan harus berupa angka!',
+          backgroundColor: Colors.red, colorText: Colors.white);
       return;
     }
 
-    // Validasi password match
     if (password != confirmPassword) {
-      Get.snackbar(
-        'Error',
-        'Konfirmasi kata sandi tidak cocok!',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
+      Get.snackbar('Error', 'Konfirmasi kata sandi tidak cocok!',
+          backgroundColor: Colors.red, colorText: Colors.white);
       return;
     }
 
-    // Call backend register method
     final result = await _authController.register(
       username: username,
       email: email,
@@ -347,118 +345,30 @@ class _RegisterScreenState extends State<RegisterScreen> {
       confirmPassword: confirmPassword,
     );
 
-    // Handle result
     if (result != null && result['user'] != null) {
-      Get.snackbar(
-        'Success',
-        'Registrasi berhasil! Silakan login.',
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
-      );
+      Get.snackbar('Success', 'Registrasi berhasil! Silakan login.',
+          backgroundColor: Colors.green, colorText: Colors.white);
       Get.offAllNamed('/login');
     }
   }
 }
 
-// Custom Text Field Widget
-class CustomTextField extends StatelessWidget {
-  final String hint;
-  final bool obscureText;
-  final TextEditingController controller;
-  final TextInputType? keyboardType;
-
-  const CustomTextField({
-    super.key,
-    required this.hint,
-    this.obscureText = false,
-    required this.controller,
-    this.keyboardType,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
-
-    return TextField(
-      controller: controller,
-      obscureText: obscureText,
-      keyboardType: keyboardType,
-      decoration: InputDecoration(
-        hintText: hint,
-        filled: true,
-        fillColor: const Color(0xFFF5F5F5),
-        contentPadding: EdgeInsets.symmetric(
-          horizontal: screenWidth * 0.05,
-          vertical: screenHeight * 0.02,
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(screenWidth * 0.05),
-          borderSide: BorderSide.none,
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(screenWidth * 0.05),
-          borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(screenWidth * 0.05),
-          borderSide: const BorderSide(color: Color(0xFFFF5858), width: 2),
-        ),
-      ),
-    );
-  }
-}
-
-// Clippers
-class TopCurveClipper extends CustomClipper<Path> {
+class CurvedTopClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
-    Path path = Path();
-    path.lineTo(0, size.height - 40);
-    path.quadraticBezierTo(
-      size.width / 2,
-      size.height + 30,
-      size.width,
-      size.height - 40,
-    );
-    path.lineTo(size.width, 0);
+    final roundingHeight = size.height * 3 / 5;
+    final filledRectangle =
+        Rect.fromLTRB(0, 0, size.width, size.height - roundingHeight);
+    final roundingRectangle = Rect.fromLTRB(
+        -5, size.height - roundingHeight * 2, size.width + 5, size.height);
+
+    final path = Path();
+    path.addRect(filledRectangle);
+    path.arcTo(roundingRectangle, pi, -pi, true);
     path.close();
     return path;
   }
 
   @override
-  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
-}
-
-class BottomCurveClipper extends CustomClipper<Path> {
-  @override
-  Path getClip(Size size) {
-    Path path = Path();
-    path.moveTo(0, size.height * 0.2);
-    path.quadraticBezierTo(
-      size.width * 0.25,
-      size.height * 0.5,
-      size.width * 0.4,
-      size.height * 0.4,
-    );
-    path.quadraticBezierTo(
-      size.width * 0.55,
-      size.height * 0.36,
-      size.width * 0.65,
-      size.height * 0.35,
-    );
-    path.quadraticBezierTo(
-      size.width * 0.9,
-      size.height * 0.5,
-      size.width,
-      size.height,
-    );
-    path.lineTo(size.width, size.height);
-    path.lineTo(0, size.height);
-    path.close();
-    return path;
-  }
-
-  @override
-  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
+  bool shouldReclip(CustomClipper<Path> oldClipper) => true;
 }
