@@ -19,7 +19,8 @@ class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
   String selectedWaktuMakan = 'Makan Siang';
   DateTime selectedDate = DateTime.now();
   final JurnalService _jurnalService = JurnalService();
-  bool _isLocaleInitialized = false; // Tambahkan flag untuk tracking inisialisasi
+  bool _isLocaleInitialized =
+      false; // Tambahkan flag untuk tracking inisialisasi
 
   final List<Map<String, dynamic>> makananList = [
     {
@@ -133,23 +134,28 @@ class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
             mainAxisSize: MainAxisSize.min,
             children: [
               TypeAheadField<String>(
-                textFieldConfiguration: TextFieldConfiguration(
-                  controller: typeAheadController,
-                  decoration: const InputDecoration(labelText: 'Nama Makanan'),
-                ),
+                controller: typeAheadController,
                 suggestionsCallback: (pattern) {
                   return _makananSuggestions
                       .where((item) =>
                           item.toLowerCase().contains(pattern.toLowerCase()))
                       .toList();
                 },
+                builder: (context, controller, focusNode) {
+                  return TextField(
+                    controller: controller,
+                    focusNode: focusNode,
+                    decoration:
+                        const InputDecoration(labelText: 'Nama Makanan'),
+                  );
+                },
                 itemBuilder: (context, suggestion) {
                   return ListTile(title: Text(suggestion));
                 },
-                onSuggestionSelected: (suggestion) {
+                onSelected: (suggestion) {
                   typeAheadController.text = suggestion;
                 },
-                noItemsFoundBuilder: (context) => const Padding(
+                emptyBuilder: (context) => const Padding(
                   padding: EdgeInsets.all(8.0),
                   child: Text('Makanan tidak ditemukan.'),
                 ),
@@ -342,7 +348,8 @@ class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
     String formattedDate;
     try {
       if (_isLocaleInitialized) {
-        formattedDate = DateFormat('EEEE, dd MMMM yyyy', 'id_ID').format(selectedDate);
+        formattedDate =
+            DateFormat('EEEE, dd MMMM yyyy', 'id_ID').format(selectedDate);
       } else {
         // Fallback ke format default jika locale belum ready
         formattedDate = DateFormat('EEEE, dd MMMM yyyy').format(selectedDate);
@@ -351,7 +358,7 @@ class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
       // Fallback sederhana jika ada error
       formattedDate = DateFormat('yyyy-MM-dd').format(selectedDate);
     }
-    
+
     final currentTime = DateFormat('HH:mm').format(DateTime.now());
 
     // Buat jurnal entry baru
