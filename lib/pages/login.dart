@@ -110,7 +110,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     obscureText: true,
                   ),
                   SizedBox(height: screenHeight * 0.04),
-                  Center(
+                  Align(
+                    alignment: Alignment.centerLeft,
                     child: ElevatedButton(
                       onPressed: () async {
                         final username = usernameController.text.trim();
@@ -138,8 +139,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFFF5858),
                         padding: EdgeInsets.symmetric(
-                          horizontal: screenWidth * 0.2,
-                          vertical: screenHeight * 0.018,
+                          horizontal: screenWidth * 0.12,
+                          vertical: screenHeight * 0.011,
                         ),
                         shape: RoundedRectangleBorder(
                           borderRadius:
@@ -156,26 +157,27 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                   ),
-                  SizedBox(height: screenHeight * 0.025),
-                  Center(
+                  SizedBox(height: screenHeight * 0.01),
+                  Align(
+                    alignment: Alignment.centerLeft,
                     child: GestureDetector(
                       onTap: () {
                         Navigator.pushNamed(context, '/register');
                       },
                       child: Text.rich(
                         TextSpan(
-                          text: "Belum memiliki akun?",
+                          text: "Belum memiliki akun? ",
                           style: TextStyle(
-                            fontSize: screenWidth * 0.035,
+                            fontSize: screenWidth * 0.04,
                           ),
                           children: [
                             TextSpan(
-                              text: 'Daftar Sekarang',
+                              text: 'Daftar \n Sekarang',
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 decoration: TextDecoration.underline,
                                 color: Colors.black,
-                                fontSize: screenWidth * 0.035,
+                                fontSize: screenWidth * 0.04,
                               ),
                             ),
                           ],

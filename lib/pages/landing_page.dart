@@ -5,8 +5,13 @@ class LandingPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return Scaffold(
       body: Container(
+        width: double.infinity,
+        height: double.infinity,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [Color(0xFFE43A15), Color(0xFFE65245)],
@@ -15,62 +20,44 @@ class LandingPage extends StatelessWidget {
           ),
         ),
         child: SafeArea(
-          child: Column(
+          child: Stack(
             children: [
-              const Spacer(),
-
-              // Hanya logo (tanpa teks)
-              Center(
+              // Logo di tengah
+              Align(
+                alignment: Alignment.center,
                 child: Image.asset(
                   'assets/images/logo_sweetsense.png',
-                  width: 400,
-                  height: 400,
+                  width: screenWidth * 0.7,
+                  height: screenWidth * 0.7,
+                  fit: BoxFit.contain,
                 ),
               ),
 
-              const Spacer(),
-
-              // Tombol Get Started di kiri bawah
-              Container(
-                alignment: Alignment.bottomLeft,
-                margin: const EdgeInsets.only(left: 20, bottom: 200),
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: Colors.black,
-                    elevation: 4,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 10,
-                      horizontal: 30,
-                    ),
-                  ),
-                  onPressed: () {
-                    Navigator.pushNamed(context, '/onboarding_screen');
-                  },
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        decoration: const BoxDecoration(
-                          color: Colors.black,
-                          shape: BoxShape.circle,
-                        ),
-                        padding: const EdgeInsets.all(6),
-                        child: const Icon(
-                          Icons.arrow_forward,
-                          color: Colors.white,
-                          size: 14,
-                        ),
+              // Tombol Get Started di bawah tengah
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: Padding(
+                  padding: EdgeInsets.only(bottom: screenHeight * 0.05),
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: Colors.black,
+                      elevation: 4,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      const SizedBox(width: 10),
-                      const Text(
-                        'Get Started',
-                        style: TextStyle(fontWeight: FontWeight.bold),
+                      padding: EdgeInsets.symmetric(
+                        vertical: screenHeight * 0.015,
+                        horizontal: screenWidth * 0.2,
                       ),
-                    ],
+                    ),
+                    onPressed: () {
+                      Navigator.pushNamed(context, '/onboarding_screen');
+                    },
+                    child: const Text(
+                      'Get Started',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
                   ),
                 ),
               ),
