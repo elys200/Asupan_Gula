@@ -3,21 +3,73 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../constants/constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/material.dart';
 
 class AuthenticationController extends GetxController {
   final isLoading = false.obs;
-
   final RxnString token = RxnString();
 
   void _showFirstError(Map<String, dynamic> data) {
     if (data['errors'] != null && data['errors'] is Map) {
       final firstError = (data['errors'] as Map).values.first;
       if (firstError is List && firstError.isNotEmpty) {
-        Get.snackbar('Error', firstError.first.toString());
+        Get.snackbar(
+          'Error',
+          firstError.first.toString(),
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
       }
     } else if (data['message'] != null) {
-      Get.snackbar('Error', data['message'].toString());
+      Get.snackbar(
+        'Error',
+        data['message'].toString(),
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
     }
+  }
+
+  void showSuccess(String title, String message) {
+    Get.snackbar(
+      title,
+      message,
+      icon: const Icon(Icons.check_circle, color: Colors.white),
+      backgroundColor: Colors.green,
+      colorText: Colors.white,
+      snackPosition: SnackPosition.TOP,
+      margin: const EdgeInsets.all(16),
+      borderRadius: 12,
+      duration: const Duration(seconds: 3),
+      boxShadows: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.2),
+          blurRadius: 8,
+          offset: const Offset(0, 4),
+        )
+      ],
+    );
+  }
+
+  void showError(String title, String message) {
+    Get.snackbar(
+      title,
+      message,
+      icon: const Icon(Icons.error, color: Colors.white),
+      backgroundColor: Colors.red,
+      colorText: Colors.white,
+      snackPosition: SnackPosition.TOP,
+      margin: const EdgeInsets.all(16),
+      borderRadius: 12,
+      duration: const Duration(seconds: 4),
+      boxShadows: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.2),
+          blurRadius: 8,
+          offset: const Offset(0, 4),
+        )
+      ],
+    );
   }
 
   @override
@@ -73,20 +125,20 @@ class AuthenticationController extends GetxController {
 
       final data = jsonDecode(response.body);
       if (response.statusCode == 201 && data['user'] != null) {
-        Get.snackbar('Sukses', 'Registrasi berhasil! Silakan login.');
+        showSuccess('Sukses', 'Registrasi berhasil! Silakan login.');
         return data;
       }
       _showFirstError(data);
       return null;
     } catch (_) {
-      Get.snackbar('Error', 'Terjadi kesalahan. Coba lagi nanti.');
+      showError('Error', 'Terjadi kesalahan. Coba lagi nanti.');
       return null;
     } finally {
       isLoading.value = false;
     }
   }
 
-  //Login
+  // Login
   Future<dynamic> login({
     required String username,
     required String password,
@@ -104,20 +156,20 @@ class AuthenticationController extends GetxController {
       final data = jsonDecode(response.body);
       if (response.statusCode == 200 && data['user'] != null) {
         await _persistToken(data['token']);
-        Get.snackbar('Sukses', 'Login berhasil!');
+        showSuccess('Sukses', 'Login berhasil!');
         return data;
       }
       _showFirstError(data);
       return null;
     } catch (_) {
-      Get.snackbar('Error', 'Terjadi kesalahan. Coba lagi nanti.');
+      showError('Error', 'Terjadi kesalahan. Coba lagi nanti.');
       return null;
     } finally {
       isLoading.value = false;
     }
   }
 
-  //Logout
+  // Logout
   Future<void> logout() async {
     isLoading.value = true;
     try {
@@ -125,7 +177,7 @@ class AuthenticationController extends GetxController {
       final authToken = prefs.getString('token');
 
       if (authToken == null) {
-        Get.snackbar('Error', 'Token tidak ditemukan.');
+        showError('Error', 'Token tidak ditemukan.');
         return;
       }
 
@@ -141,14 +193,14 @@ class AuthenticationController extends GetxController {
       final data = jsonDecode(response.body);
 
       if (response.statusCode == 200) {
-        await _persistToken(null); // hapus token dari penyimpanan lokal
-        Get.snackbar('Sukses', data['message'] ?? 'Logout berhasil.');
-        Get.offAllNamed('/login'); // redirect ke halaman login
+        await _persistToken(null);
+        showSuccess('Sukses', data['message'] ?? 'Logout berhasil.');
+        Get.offAllNamed('/login');
       } else {
         _showFirstError(data);
       }
     } catch (_) {
-      Get.snackbar('Error', 'Gagal logout. Periksa koneksi Anda.');
+      showError('Error', 'Gagal logout. Periksa koneksi Anda.');
     } finally {
       isLoading.value = false;
     }

@@ -160,32 +160,37 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
 
   // Membangun tombol submit
   Widget _buildSubmitButton() {
+    final controller = Get.find<ProfileController>();
     return Padding(
       padding: const EdgeInsets.only(top: 60.0),
       child: Center(
-        child: SizedBox(
-          width: 150,
-          height: 50,
-          child: ElevatedButton(
-            onPressed: _handlePasswordChange,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFFF4A4A),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+        child: Obx(() => SizedBox(
+              width: 150,
+              height: 50,
+              child: ElevatedButton(
+                onPressed: controller.isChangingPassword.value
+                    ? null
+                    : _handlePasswordChange,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFFF4A4A),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 6,
+                  shadowColor: const Color.fromRGBO(255, 74, 74, 0.5),
+                ),
+                child: controller.isChangingPassword.value
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : Text(
+                        'Simpan',
+                        style: GoogleFonts.poppins(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.white,
+                        ),
+                      ),
               ),
-              elevation: 6,
-              shadowColor: Color.fromRGBO(255, 74, 74, 0.5),
-            ),
-            child: Text(
-              'Simpan',
-              style: GoogleFonts.poppins(
-                fontSize: 18,
-                fontWeight: FontWeight.w500,
-                color: Colors.white,
-              ),
-            ),
-          ),
-        ),
+            )),
       ),
     );
   }
@@ -201,21 +206,32 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
         context: context,
         type: QuickAlertType.error,
         text: 'Konfirmasi kata sandi tidak cocok.',
+        confirmBtnText: 'OK',
+        backgroundColor: Colors.white,
+        confirmBtnColor: const Color(0xFFFF4A4A),
+        confirmBtnTextStyle: GoogleFonts.poppins(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+          color: Colors.white,
+        ),
+        borderRadius: 20,
       );
       return;
     }
 
     final controller = Get.find<ProfileController>();
-    await controller.changePassword(current, newPassword, confirm);
+    final result =
+        await controller.changePassword(current, newPassword, confirm);
 
-    // Check if widget is still mounted before showing alert
     if (!mounted) return;
-    
-    // Menampilkan alert dan kembali
+
+    final bool isSuccess = result['success'] ?? false;
+    final String message = result['message'] ?? 'Terjadi kesalahan.';
+
     QuickAlert.show(
       context: context,
-      type: QuickAlertType.success,
-      text: 'Kata sandi Anda sudah berubah!',
+      type: isSuccess ? QuickAlertType.success : QuickAlertType.error,
+      text: message,
       confirmBtnText: 'OK',
       backgroundColor: Colors.white,
       confirmBtnColor: const Color(0xFFFF4A4A),
@@ -226,8 +242,8 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
       ),
       borderRadius: 20,
       onConfirmBtnTap: () {
-        Navigator.of(context).pop(); // Tutup alert
-        Navigator.of(context).pop(); // Kembali ke halaman sebelumnya
+        Navigator.of(context).pop();
+        if (isSuccess) Navigator.of(context).pop();
       },
     );
   }

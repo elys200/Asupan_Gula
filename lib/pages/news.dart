@@ -22,14 +22,24 @@ class _NewsPageState extends State<NewsPage> {
     profileController.fetchProfile();
   }
 
+  Widget _buildAvatarPlaceholder({double radius = 20}) {
+    return CircleAvatar(
+      radius: radius,
+      backgroundColor: Colors.white,
+      child: Icon(Icons.person, size: radius, color: Colors.grey),
+    );
+  }
+
   Widget buildNewsCard(BuildContext context, NewsModel news) {
     double screenWidth = MediaQuery.of(context).size.width;
-    double cardWidth = screenWidth * 0.5; // 60% of screen width
+    double screenHeight = MediaQuery.of(context).size.height;
+    double cardWidth = screenWidth * 0.5;
 
     return InkWell(
       onTap: () => Get.toNamed('/news_detail', arguments: news),
       child: Container(
         width: cardWidth,
+        height: screenHeight * 0.28,
         margin: const EdgeInsets.only(left: 16),
         decoration: BoxDecoration(
           color: Colors.white,
@@ -51,13 +61,13 @@ class _NewsPageState extends State<NewsPage> {
               child: news.fotoUrl != null
                   ? Image.network(
                       news.fotoUrl!,
-                      height: 100,
+                      height: screenHeight * 0.12,
                       width: double.infinity,
                       fit: BoxFit.cover,
                     )
                   : Image.asset(
                       'assets/images/default.png',
-                      height: 100,
+                      height: screenHeight * 0.12,
                       width: double.infinity,
                       fit: BoxFit.cover,
                     ),
@@ -72,6 +82,7 @@ class _NewsPageState extends State<NewsPage> {
                 overflow: TextOverflow.ellipsis,
               ),
             ),
+            const Spacer(),
             const Padding(
               padding: EdgeInsets.only(left: 8.0, bottom: 8.0),
               child: Chip(
@@ -193,11 +204,7 @@ class _NewsPageState extends State<NewsPage> {
                             backgroundImage: NetworkImage(user.fotoUrl!),
                             radius: 20,
                           )
-                        : const CircleAvatar(
-                            backgroundImage:
-                                AssetImage('assets/images/portrait.png'),
-                            radius: 20,
-                          ),
+                        : _buildAvatarPlaceholder(radius: 20),
                   ],
                 ),
               ),

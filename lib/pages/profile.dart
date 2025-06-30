@@ -66,6 +66,7 @@ class _ProfilePageState extends State<ProfilePage>
         Get.back();
         try {
           await _authController.logout();
+          if (!mounted) return;
           Navigator.of(context)
               .pushNamedAndRemoveUntil('/welcome', (route) => false);
         } catch (e) {

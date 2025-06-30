@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../controllers/favorite_recipe_controller.dart';
 import '../controllers/profile_controller.dart';
 import '../models/food_model.dart';
@@ -37,12 +38,19 @@ class _FavoriteRecipeState extends State<FavoriteRecipe> {
     }
   }
 
+  Widget _buildAvatarPlaceholder({double radius = 18}) {
+    return CircleAvatar(
+      radius: radius,
+      backgroundColor: Colors.white,
+      child: Icon(Icons.person, size: radius, color: Colors.grey),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      extendBodyBehindAppBar: true,
-      extendBody: true,
+      resizeToAvoidBottomInset: false, // ✅ prevent layout from resizing
       body: SafeArea(
         top: false,
         bottom: false,
@@ -81,7 +89,7 @@ class _FavoriteRecipeState extends State<FavoriteRecipe> {
         child: Row(
           children: [
             GestureDetector(
-              onTap: () => Navigator.pop(context),
+              onTap: () => Get.offNamed('/profile'),
               child: const Icon(Icons.arrow_back, color: Colors.white),
             ),
             const SizedBox(width: 10),
@@ -95,14 +103,22 @@ class _FavoriteRecipeState extends State<FavoriteRecipe> {
                 ),
               ),
             ),
-            CircleAvatar(
-              backgroundImage:
-                  user?.fotoUrl != null && user!.fotoUrl!.isNotEmpty
-                      ? NetworkImage(user.fotoUrl!)
-                      : const AssetImage('assets/images/portrait.png')
-                          as ImageProvider,
-              radius: 18,
-            ),
+            user?.fotoUrl != null && user!.fotoUrl!.isNotEmpty
+                ? CachedNetworkImage(
+                    imageUrl: user.fotoUrl!,
+                    imageBuilder: (context, imageProvider) => CircleAvatar(
+                      radius: 18,
+                      backgroundColor: Colors.white,
+                      backgroundImage: imageProvider,
+                    ),
+                    placeholder: (context, url) =>
+                        _buildAvatarPlaceholder(radius: 18),
+                    errorWidget: (context, url, error) =>
+                        _buildAvatarPlaceholder(radius: 18),
+                    memCacheHeight: 100,
+                    memCacheWidth: 100,
+                  )
+                : _buildAvatarPlaceholder(radius: 18),
           ],
         ),
       );
@@ -111,7 +127,7 @@ class _FavoriteRecipeState extends State<FavoriteRecipe> {
 
   Widget _buildSearchField() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
@@ -122,8 +138,10 @@ class _FavoriteRecipeState extends State<FavoriteRecipe> {
           onChanged: (value) => setState(() => searchQuery = value),
           decoration: const InputDecoration(
             hintText: "Search food",
+            hintStyle: TextStyle(color: Colors.grey),
             border: InputBorder.none,
             prefixIcon: Icon(Icons.search),
+            contentPadding: EdgeInsets.symmetric(vertical: 14),
           ),
         ),
       ),
@@ -148,6 +166,7 @@ class _FavoriteRecipeState extends State<FavoriteRecipe> {
       return Padding(
         padding: const EdgeInsets.all(12.0),
         child: GridView.builder(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           itemCount: filtered.length,
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2,

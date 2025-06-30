@@ -226,20 +226,14 @@ class _EditProfilePageState extends State<EditProfilePage> {
       child: TextField(
         controller: controller,
         keyboardType: keyboardType,
-        inputFormatters: noSpaces
-            ? [
-                FilteringTextInputFormatter.deny(
-                    RegExp(r'\s')), // Blokir semua spasi
-              ]
-            : null,
+        inputFormatters:
+            noSpaces ? [FilteringTextInputFormatter.deny(RegExp(r'\s'))] : null,
         style: GoogleFonts.poppins(fontSize: 15),
         decoration: InputDecoration(
           labelText: label,
           labelStyle: GoogleFonts.poppins(fontSize: 15, color: Colors.black),
-          floatingLabelStyle: GoogleFonts.poppins(
-            fontSize: 15,
-            color: Colors.black,
-          ),
+          floatingLabelStyle:
+              GoogleFonts.poppins(fontSize: 15, color: Colors.black),
           enabledBorder: const UnderlineInputBorder(
             borderSide: BorderSide(color: Colors.black26),
           ),
@@ -272,10 +266,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
             items: _genderOptions
                 .map((gender) => DropdownMenuItem<String>(
                       value: gender,
-                      child: Text(
-                        gender,
-                        style: GoogleFonts.poppins(fontSize: 15),
-                      ),
+                      child: Text(gender,
+                          style: GoogleFonts.poppins(fontSize: 15)),
                     ))
                 .toList(),
             onChanged: (value) {
@@ -293,28 +285,42 @@ class _EditProfilePageState extends State<EditProfilePage> {
   }
 
   Widget _buildSaveButton() {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: ElevatedButton(
-        onPressed: _hasChanged ? _saveChanges : null,
-        style: ElevatedButton.styleFrom(
-          fixedSize: const Size(180, 48),
-          backgroundColor:
-              _hasChanged ? const Color(0xFFFF4A4A) : Colors.grey.shade300,
-          disabledBackgroundColor: Colors.grey.shade300,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        ),
-        child: Text(
-          'Simpan Perubahan',
-          style: GoogleFonts.poppins(
-            fontSize: 14,
-            color: Colors.white,
-            fontWeight: FontWeight.w500,
+    return Obx(() => Align(
+          alignment: Alignment.centerLeft,
+          child: ElevatedButton(
+            onPressed: _hasChanged && !profileController.isUpdatingProfile.value
+                ? _saveChanges
+                : null,
+            style: ElevatedButton.styleFrom(
+              fixedSize: const Size(180, 48),
+              backgroundColor:
+                  _hasChanged && !profileController.isUpdatingProfile.value
+                      ? const Color(0xFFFF4A4A)
+                      : Colors.grey.shade300,
+              disabledBackgroundColor: Colors.grey.shade300,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
+            ),
+            child: profileController.isUpdatingProfile.value
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                : Text(
+                    'Simpan Perubahan',
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      color: Colors.white,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
           ),
-        ),
-      ),
-    );
+        ));
   }
 
   Future<void> _saveChanges() async {
@@ -323,57 +329,30 @@ class _EditProfilePageState extends State<EditProfilePage> {
     final String birthStr = _birthController.text.trim();
     final String weightStr = _weightController.text.trim();
 
-    // Validasi tambahan untuk memastikan tidak ada spasi yang lolos
-    if (name.contains(' ')) {
+    if (name.contains(' ') || email.contains(' ')) {
       QuickAlert.show(
         context: context,
         type: QuickAlertType.error,
         title: 'Input Tidak Valid',
-        text: 'Nama pengguna tidak boleh mengandung spasi.',
+        text: 'Nama pengguna dan email tidak boleh mengandung spasi.',
         confirmBtnText: 'OK',
         confirmBtnColor: const Color(0xFFFF4A4A),
       );
       return;
     }
 
-    if (email.contains(' ')) {
+    if (name.isEmpty || email.isEmpty) {
       QuickAlert.show(
         context: context,
         type: QuickAlertType.error,
         title: 'Input Tidak Valid',
-        text: 'Email tidak boleh mengandung spasi.',
+        text: 'Nama pengguna dan email tidak boleh kosong.',
         confirmBtnText: 'OK',
         confirmBtnColor: const Color(0xFFFF4A4A),
       );
       return;
     }
 
-    // Validasi field kosong
-    if (name.isEmpty) {
-      QuickAlert.show(
-        context: context,
-        type: QuickAlertType.error,
-        title: 'Input Tidak Valid',
-        text: 'Nama pengguna tidak boleh kosong.',
-        confirmBtnText: 'OK',
-        confirmBtnColor: const Color(0xFFFF4A4A),
-      );
-      return;
-    }
-
-    if (email.isEmpty) {
-      QuickAlert.show(
-        context: context,
-        type: QuickAlertType.error,
-        title: 'Input Tidak Valid',
-        text: 'Email tidak boleh kosong.',
-        confirmBtnText: 'OK',
-        confirmBtnColor: const Color(0xFFFF4A4A),
-      );
-      return;
-    }
-
-    // Validasi format email
     if (!RegExp(r'^[^@]+@[^@]+\.[^@]+$').hasMatch(email)) {
       QuickAlert.show(
         context: context,
@@ -389,42 +368,24 @@ class _EditProfilePageState extends State<EditProfilePage> {
     int? umur = int.tryParse(birthStr);
     double? berat = double.tryParse(weightStr);
 
-    if (umur == null || berat == null) {
-      QuickAlert.show(
-        context: context,
-        type: QuickAlertType.error,
-        text: 'Umur dan berat badan harus berupa angka.',
-        confirmBtnText: 'OK',
-        confirmBtnColor: const Color(0xFFFF4A4A),
-      );
-      return;
-    }
-
-    if (umur <= 0 || umur > 150) {
+    if (umur == null ||
+        berat == null ||
+        umur <= 0 ||
+        umur > 150 ||
+        berat <= 0 ||
+        berat > 500) {
       QuickAlert.show(
         context: context,
         type: QuickAlertType.error,
         title: 'Input Tidak Valid',
-        text: 'Umur harus antara 1-150 tahun.',
+        text: 'Umur harus 1-150 tahun dan berat 1-500 kg.',
         confirmBtnText: 'OK',
         confirmBtnColor: const Color(0xFFFF4A4A),
       );
       return;
     }
 
-    if (berat <= 0 || berat > 500) {
-      QuickAlert.show(
-        context: context,
-        type: QuickAlertType.error,
-        title: 'Input Tidak Valid',
-        text: 'Berat badan harus antara 1-500 kg.',
-        confirmBtnText: 'OK',
-        confirmBtnColor: const Color(0xFFFF4A4A),
-      );
-      return;
-    }
-
-    setState(() => _hasChanged = false);
+    profileController.isUpdatingProfile.value = true;
 
     try {
       await profileController.updateProfile(
@@ -451,8 +412,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
         ),
         borderRadius: 20,
         onConfirmBtnTap: () {
-          Navigator.of(context).pop(); // Close alert
-          Navigator.of(context).pop(); // Back to profile
+          Navigator.of(context).pop();
+          Navigator.of(context).pop();
         },
       );
     } catch (e) {
@@ -464,6 +425,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
         confirmBtnText: 'OK',
         confirmBtnColor: const Color(0xFFFF4A4A),
       );
+    } finally {
+      profileController.isUpdatingProfile.value = false;
     }
   }
 }

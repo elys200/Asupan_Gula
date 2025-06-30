@@ -142,9 +142,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             obscureText: true),
                         SizedBox(height: screenHeight * 0.03),
                         _buildRegisterButton(screenWidth, screenHeight),
-                        SizedBox(
-                            height: screenHeight *
-                                0.1),
+                        SizedBox(height: screenHeight * 0.1),
                       ],
                     ),
                   ),
@@ -198,11 +196,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
           hintStyle: TextStyle(fontSize: 14, color: Colors.grey[600]),
           filled: true,
           fillColor: Colors.white,
-          contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16, vertical: 12),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           border: OutlineInputBorder(
-            borderRadius:
-                BorderRadius.circular(15),
+            borderRadius: BorderRadius.circular(15),
             borderSide: const BorderSide(color: Color(0xFFE43A15), width: 1),
           ),
           enabledBorder: OutlineInputBorder(
@@ -262,27 +259,31 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget _buildRegisterButton(double screenWidth, double screenHeight) {
     return Align(
       alignment: Alignment.centerLeft,
-      child: SizedBox(
-        width: screenWidth * 0.3,
-        height: screenHeight * 0.06,
-        child: Obx(() {
-          return _authController.isLoading.value
-              ? const Center(
-                  child: CircularProgressIndicator(
-                    valueColor:
-                        AlwaysStoppedAnimation<Color>(Color(0xFFFF5858)),
-                  ),
-                )
-              : ElevatedButton(
-                  onPressed: _onRegisterPressed,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFFF5858),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(screenWidth * 0.03),
+      child: Obx(() {
+        final isLoading = _authController.isLoading.value;
+
+        return SizedBox(
+          width: screenWidth * 0.3,
+          height: screenHeight * 0.06,
+          child: ElevatedButton(
+            onPressed: isLoading ? null : _onRegisterPressed,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFFF5858),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(screenWidth * 0.03),
+              ),
+              elevation: 5,
+            ),
+            child: isLoading
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2,
                     ),
-                    elevation: 5,
-                  ),
-                  child: Text(
+                  )
+                : Text(
                     'Register',
                     style: TextStyle(
                       color: Colors.white,
@@ -290,9 +291,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                );
-        }),
-      ),
+          ),
+        );
+      }),
     );
   }
 
