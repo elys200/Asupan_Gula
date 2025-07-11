@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
@@ -24,7 +26,6 @@ import 'package:sweetsense/pages/food_detail.dart';
 import 'package:sweetsense/pages/news_detail.dart';
 import 'package:sweetsense/pages/jurnal.dart';
 
-
 // Import controller
 import 'package:sweetsense/controllers/authentication.dart';
 import 'package:sweetsense/controllers/profile_controller.dart';
@@ -37,18 +38,34 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 void main() async {
   // Pastikan flutter binding siap
   WidgetsFlutterBinding.ensureInitialized();
+  print('✅ Flutter binding initialized');
 
-  // Load file .env
-  await dotenv.load(fileName: ".env");
+  try {
+    await dotenv.load(fileName: ".env");
+    print('✅ .env loaded');
+  } catch (e) {
+    print('❌ Failed loading .env: $e');
+  }
 
-  // Inisialisasi controller
   Get.put(AuthenticationController());
   Get.put(ProfileController());
   Get.put(FavoriteRecipeController());
   Get.put(FoodController());
   Get.put(NewsController());
+  print('✅ Controllers initialized');
 
-  runApp(const SweetSense());
+  FlutterError.onError = (details) {
+    FlutterError.presentError(details);
+    print('🔥 Flutter Error: ${details.exception}');
+    print(details.stack);
+  };
+
+  runZonedGuarded(() {
+    runApp(const SweetSense());
+  }, (error, stack) {
+    print('🚨 Uncaught Zone Error: $error');
+    print(stack);
+  });
 }
 
 class SweetSense extends StatelessWidget {
@@ -92,8 +109,7 @@ class SweetSense extends StatelessWidget {
         GetPage(name: '/food', page: () => const FoodPage()),
         GetPage(name: '/news', page: () => const NewsPage()),
         GetPage(name: '/hitung', page: () => const HitungPage()),
-        GetPage(name: '/hitung', page: () => const JurnalPage()),
-
+        GetPage(name: '/jurnal', page: () => const JurnalPage()),
 
         //  Detail Pages
         GetPage(

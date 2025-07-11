@@ -1,10 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:intl/intl.dart';
-import 'package:intl/date_symbol_data_local.dart'; // Tambahkan import ini
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sweetsense/pages/jurnal.dart';
-import 'jurnal_entry.dart';
-import 'jurnal_service.dart';
+import '../services/jurnal_service.dart';
 import 'package:sweetsense/api/openfood_api.dart';
 import 'package:sweetsense/api/usda_api.dart';
 
@@ -18,9 +20,9 @@ class PerhitunganGulaPage extends StatefulWidget {
 class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
   String selectedWaktuMakan = 'Makan Siang';
   DateTime selectedDate = DateTime.now();
-  final JurnalService _jurnalService = JurnalService();
-  bool _isLocaleInitialized =
-      false; // Tambahkan flag untuk tracking inisialisasi
+  JurnalApiService? _jurnalService;
+  bool _isLoadingToken = true;
+  int? _userId;
 
   final List<Map<String, dynamic>> makananList = [
     {
@@ -84,29 +86,61 @@ class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
     'Kopi Hitam',
   ];
 
-  // Tambahkan method untuk inisialisasi locale
   @override
   void initState() {
     super.initState();
-    _initializeLocale();
+    log('📋 initState dipanggil');
+    _initializeLocale().catchError((e, s) {
+      logError('❌ Error di _initializeLocale', e, s);
+    });
+    _loadTokenAndUser().catchError((e, s) {
+      logError('❌ Error di _loadTokenAndUser', e, s);
+    });
+    runZonedGuarded(() {
+      log('🔒 Zone guard aktif di halaman ini');
+    }, (e, s) {
+      logError('🚨 Zone error di halaman ini', e, s);
+    });
   }
 
   Future<void> _initializeLocale() async {
+    log('🌏 Menginisialisasi locale...');
     try {
       await initializeDateFormatting('id_ID', null);
-      setState(() {
-        _isLocaleInitialized = true;
-      });
-    } catch (e) {
-      print('Error initializing locale: $e');
+      log('✅ Locale selesai');
+    } catch (e, s) {
+      logError('❌ Error initializing locale', e, s);
       // Fallback jika locale id_ID tidak tersedia
+    }
+  }
+
+  Future<void> _loadTokenAndUser() async {
+    log('🔑 Loading token & user...');
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+    final userId = prefs.getInt('user_id');
+    log('ℹ️ token: $token, userId: $userId');
+
+    if (token != null && userId != null && mounted) {
       setState(() {
-        _isLocaleInitialized = true;
+        _jurnalService = JurnalApiService(token: token);
+        _userId = userId;
+        _isLoadingToken = false;
       });
+      log('✅ Token & user loaded');
+    } else {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('Token/User ID tidak ditemukan, login lagi')),
+      );
+      log('❌ Token/User ID tidak ditemukan, kembali');
+      Navigator.pop(context);
     }
   }
 
   void _selectDate() async {
+    log('🗓 Memilih tanggal');
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: selectedDate,
@@ -118,10 +152,12 @@ class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
       setState(() {
         selectedDate = picked;
       });
+      log('📅 Tanggal dipilih: $selectedDate');
     }
   }
 
   void _tambahMakanan() {
+    log('🍲 Tambah Makanan dipanggil');
     final TextEditingController typeAheadController = TextEditingController();
     final TextEditingController jumlahController = TextEditingController();
 
@@ -154,6 +190,7 @@ class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
                 },
                 onSelected: (suggestion) {
                   typeAheadController.text = suggestion;
+                  log('🍛 Makanan dipilih: $suggestion');
                 },
                 emptyBuilder: (context) => const Padding(
                   padding: EdgeInsets.all(8.0),
@@ -183,12 +220,17 @@ class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
                 if (namaMakanan.isNotEmpty && jumlahAngka != null) {
                   final currentContext = context;
                   Navigator.pop(contextDialog);
+                  log('📥 Makanan: $namaMakanan, Jumlah: $jumlahAngka');
 
-                  final hasilOFF =
-                      await OpenFoodFactsAPI.fetchNutrisiMakanan(namaMakanan);
-                  final hasilUSDA =
-                      await USDAApi.fetchNutrisiMakanan(namaMakanan);
-                  final hasil = hasilOFF ?? hasilUSDA;
+                  dynamic hasil;
+                  try {
+                    hasil = await OpenFoodFactsAPI.fetchNutrisiMakanan(
+                            namaMakanan) ??
+                        await USDAApi.fetchNutrisiMakanan(namaMakanan);
+                    log('✅ Nutrisi ditemukan untuk $namaMakanan');
+                  } catch (e, s) {
+                    logError('❌ Gagal fetch nutrisi untuk $namaMakanan', e, s);
+                  }
 
                   if (!mounted) return;
 
@@ -252,6 +294,7 @@ class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
   }
 
   void _showPopupDialog() {
+    log('📋 Konfirmasi simpan muncul');
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -296,13 +339,8 @@ class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
                     Expanded(
                       child: ElevatedButton(
                         onPressed: () {
-                          _simpanDataJurnal();
                           Navigator.of(context).pop();
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                                builder: (_) => const JurnalPage()),
-                          );
+                          _simpanDataJurnal();
                         },
                         style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.redAccent),
@@ -319,75 +357,58 @@ class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
     );
   }
 
-  void _simpanDataJurnal() {
-    // Konversi makanan list ke MakananItem
-    final List<MakananItem> makananItems = makananList.map((item) {
-      return MakananItem(
-        nama: item['nama'] ?? '',
-        jumlah: item['jumlah'] ?? '',
-        jumlahAngka: (item['jumlahAngka'] ?? 0.0).toDouble(),
-        kalori: (item['kalori'] ?? 0.0).toDouble(),
-        gula: (item['gula'] ?? 0.0).toDouble(),
-        protein: (item['protein'] ?? 0.0).toDouble(),
-        lemak: (item['lemak'] ?? 0.0).toDouble(),
-        karbohidrat: (item['karbohidrat'] ?? 0.0).toDouble(),
-      );
-    }).toList();
-
-    // Hitung total nutrisi
-    final totalKalori = getTotalKalori();
-    final totalGula = getTotalGula();
-    final totalLemak = getTotalLemak();
-    final totalKarbo = getTotalKarbo();
-
-    // Tentukan status berdasarkan total gula
-    final status = JurnalService.getStatusFromGula(totalGula);
-    final statusColor = JurnalService.getStatusColor(status);
-
-    // Format tanggal dengan safe formatting
-    String formattedDate;
-    try {
-      if (_isLocaleInitialized) {
-        formattedDate =
-            DateFormat('EEEE, dd MMMM yyyy', 'id_ID').format(selectedDate);
-      } else {
-        // Fallback ke format default jika locale belum ready
-        formattedDate = DateFormat('EEEE, dd MMMM yyyy').format(selectedDate);
-      }
-    } catch (e) {
-      // Fallback sederhana jika ada error
-      formattedDate = DateFormat('yyyy-MM-dd').format(selectedDate);
+  Future<void> _simpanDataJurnal() async {
+    log('💾 Menyimpan data jurnal...');
+    if (_jurnalService == null || _userId == null) {
+      log('❌ JurnalService/userId null');
+      return;
     }
 
-    final currentTime = DateFormat('HH:mm').format(DateTime.now());
+    final tanggal = DateFormat('yyyy-MM-dd').format(selectedDate);
+    final waktuMakan = selectedWaktuMakan;
+    final totalGula = getTotalGula();
+    final totalKalori = getTotalKalori();
+    final totalKarbo = getTotalKarbo();
+    final totalLemak = getTotalLemak();
 
-    // Buat jurnal entry baru
-    final newEntry = JurnalEntry(
-      tanggal: formattedDate,
-      waktuMakan: selectedWaktuMakan,
-      jam: '$currentTime PM',
-      makananList: makananItems,
-      totalKalori: totalKalori,
-      totalGula: totalGula,
-      totalKarbo: totalKarbo,
-      totalLemak: totalLemak,
-      status: status,
-      statusColor: statusColor,
-    );
+    final jamSekarang = DateFormat('HH:mm').format(DateTime.now());
 
-    // Simpan ke service
-    _jurnalService.addJurnalEntry(newEntry);
+    log('📦 Kirim ke backend: tanggal=$tanggal, waktu_makan=$waktuMakan, total_gula=$totalGula, total_kalori=$totalKalori, total_karbo=$totalKarbo, total_lemak=$totalLemak, jam=$jamSekarang');
 
-    // Tampilkan snackbar konfirmasi
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Data berhasil disimpan ke jurnal'),
-        backgroundColor: Colors.green,
-      ),
-    );
+    try {
+      await _jurnalService!.tambahJurnalLengkap(
+        tanggal: tanggal,
+        waktuMakan: waktuMakan,
+        totalGula: totalGula,
+        totalKalori: totalKalori,
+        totalKarbo: totalKarbo,
+        totalLemak: totalLemak,
+        jam: jamSekarang,
+        userId: _userId!,
+      );
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Data berhasil disimpan'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      log('✅ Data jurnal tersimpan');
+
+      Navigator.pushReplacement(
+          context, MaterialPageRoute(builder: (_) => const JurnalPage()));
+    } catch (e, s) {
+      logError('❌ Gagal simpan jurnal', e, s);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Gagal simpan: $e')));
+    }
   }
 
   void _hapusMakanan(int index) {
+    log('🗑 Hapus makanan di index: $index');
     setState(() {
       makananList.removeAt(index);
     });
@@ -427,6 +448,13 @@ class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
 
   @override
   Widget build(BuildContext context) {
+    log('📋 build dipanggil, _isLoadingToken=$_isLoadingToken');
+    if (_isLoadingToken) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       backgroundColor: Colors.redAccent,
       appBar: AppBar(
@@ -503,6 +531,7 @@ class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
                   onTap: () {
                     setState(() {
                       selectedWaktuMakan = option;
+                      log('🍽 Waktu makan dipilih: $selectedWaktuMakan');
                     });
                   },
                   child: Container(
@@ -584,5 +613,19 @@ class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
         ),
       ),
     );
+  }
+
+  void log(String message) {
+    // ignore: avoid_print
+    print(message);
+  }
+
+  void logError(String context, Object error, StackTrace? stack) {
+    // ignore: avoid_print
+    print('$context: $error');
+    if (stack != null) {
+      // ignore: avoid_print
+      print(stack);
+    }
   }
 }

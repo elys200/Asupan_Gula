@@ -9,8 +9,8 @@ class FoodController {
     final uri = Uri.parse('${url}resep-all');
     final response = await http.get(uri);
 
-    print('🔍 getAllFoods status: ${response.statusCode}');
-    print('📦 body: ${response.body}');
+    print('getAllFoods status: ${response.statusCode}');
+    print('body: ${response.body}');
 
     if (response.statusCode == 200) {
       final responseData = jsonDecode(response.body);
@@ -28,8 +28,8 @@ class FoodController {
     final uri = Uri.parse('${url}resep/$id');
     final response = await http.get(uri);
 
-    print('🔍 getFoodById status: ${response.statusCode}');
-    print('📦 body: ${response.body}');
+    print('getFoodById status: ${response.statusCode}');
+    print('body: ${response.body}');
 
     if (response.statusCode == 200) {
       final jsonData = jsonDecode(response.body);
@@ -53,8 +53,8 @@ class FoodController {
     final uri = Uri.parse('${url}resep-terbaru');
     final response = await http.get(uri);
 
-    print('🔍 getTop3Foods status: ${response.statusCode}');
-    print('📦 body: ${response.body}');
+    print('getTop3Foods status: ${response.statusCode}');
+    print('body: ${response.body}');
 
     if (response.statusCode == 200) {
       final responseData = jsonDecode(response.body);

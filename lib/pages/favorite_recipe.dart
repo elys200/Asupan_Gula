@@ -95,7 +95,7 @@ class _FavoriteRecipeState extends State<FavoriteRecipe> {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                "Hi, ${user?.username ?? 'User'}",
+                "Hi, ${user?.username ?? 'User'}\nTemukan resep favoritmu",
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 18,

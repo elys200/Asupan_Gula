@@ -238,7 +238,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               width: double.infinity,
                               child: ElevatedButton(
                                 onPressed: () {
-                                  Navigator.pushNamed(context, '/jurnal');
+                                  Get.toNamed('/jurnal');
                                 },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: const Color(0xFFF94F45),

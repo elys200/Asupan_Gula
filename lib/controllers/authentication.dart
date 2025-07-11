@@ -156,6 +156,10 @@ class AuthenticationController extends GetxController {
       final data = jsonDecode(response.body);
       if (response.statusCode == 200 && data['user'] != null) {
         await _persistToken(data['token']);
+
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setInt('user_id', data['user']['id']); // 🔷 Tambahkan ini!
+
         showSuccess('Sukses', 'Login berhasil!');
         return data;
       }
