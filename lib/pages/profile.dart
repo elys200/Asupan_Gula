@@ -33,6 +33,43 @@ class _ProfilePageState extends State<ProfilePage>
     _controller.fetchProfile();
   }
 
+  Future<void> _showImageOptions() async {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.photo_library),
+                title: const Text('Ganti Foto'),
+                onTap: () async {
+                  Navigator.pop(context);
+                  await _pickImage();
+                },
+              ),
+              if (_controller.user.value?.fotoUrl != null &&
+                  _controller.user.value!.fotoUrl!.isNotEmpty)
+                ListTile(
+                  leading: const Icon(Icons.delete),
+                  title: const Text('Hapus Foto'),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    await _confirmDeletePhoto();
+                  },
+                ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   Future<void> _pickImage() async {
     try {
       final pickedFile = await _picker.pickImage(
@@ -50,6 +87,30 @@ class _ProfilePageState extends State<ProfilePage>
         setState(() => _isUploadingImage = false);
       }
     }
+  }
+
+  Future<void> _confirmDeletePhoto() async {
+    QuickAlert.show(
+      context: context,
+      type: QuickAlertType.warning,
+      title: 'Hapus Foto',
+      text: 'Apakah Anda yakin ingin menghapus foto profil?',
+      confirmBtnText: 'Hapus',
+      cancelBtnText: 'Batal',
+      confirmBtnColor: Colors.red,
+      showCancelBtn: true,
+      onConfirmBtnTap: () async {
+        Get.back();
+        setState(() => _isUploadingImage = true);
+        try {
+          await _controller.removeProfileImage();
+        } catch (e) {
+          Get.snackbar('Gagal', 'Gagal menghapus foto profil.\n$e');
+        } finally {
+          if (mounted) setState(() => _isUploadingImage = false);
+        }
+      },
+    );
   }
 
   void _showExitQuickAlert() {
@@ -104,6 +165,7 @@ class _ProfilePageState extends State<ProfilePage>
 
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
+      automaticallyImplyLeading: false, // ⬅️ penting
       centerTitle: true,
       title: Text(
         'Profile',
@@ -180,7 +242,7 @@ class _ProfilePageState extends State<ProfilePage>
                   bottom: 0,
                   right: 4,
                   child: GestureDetector(
-                    onTap: _pickImage,
+                    onTap: _showImageOptions,
                     child: const CircleAvatar(
                       radius: 14,
                       backgroundColor: Colors.white,

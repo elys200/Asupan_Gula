@@ -92,7 +92,7 @@ class ProfileController extends GetxController {
         if (beratBadan != null) 'berat_badan': beratBadan.toString(),
       });
 
-      final res = await dio.post(
+      final res = await dio.put(
         'user/profile',
         data: formData,
         options: dioLib.Options(headers: {'Authorization': 'Bearer $token'}),
@@ -162,6 +162,32 @@ class ProfileController extends GetxController {
       }
     } catch (e) {
       Get.snackbar('Error', 'Gagal memperbarui foto.\n${e.toString()}');
+    }
+  }
+
+  //Hapus Foto
+  Future<void> removeProfileImage() async {
+    final token = _auth.token.value;
+    if (token == null) {
+      Get.snackbar('Error', 'Silakan login terlebih dahulu.');
+      return;
+    }
+
+    try {
+      final res = await dio.delete(
+        'user/profile/foto',
+        options: dioLib.Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+
+      if (res.statusCode == 200) {
+        user.value = user.value?.copyWith(foto: null);
+        imageFile.value = null;
+        Get.snackbar('Berhasil', 'Foto profil berhasil dihapus');
+      } else {
+        Get.snackbar('Error', 'Gagal menghapus foto profil.');
+      }
+    } catch (e) {
+      Get.snackbar('Error', 'Gagal menghapus foto profil.\n$e');
     }
   }
 

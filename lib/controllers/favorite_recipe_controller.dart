@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+import 'package:lottie/lottie.dart';
 import 'package:get/get.dart';
 import '../models/favorite_recipe_model.dart';
 import '../constants/constants.dart';
@@ -53,7 +55,10 @@ class FavoriteRecipeController extends GetxController {
     isLoading.value = false;
   }
 
-  Future<void> toggleFavorite(int resepId) async {
+  Future<void> toggleFavorite(
+    int resepId, {
+    bool showUnfavoriteNotice = true,
+  }) async {
     if (userToken == null) return;
 
     try {
@@ -70,18 +75,31 @@ class FavoriteRecipeController extends GetxController {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         if (favoriteIds.contains(resepId)) {
+          // Unfavorite
           favoriteIds.remove(resepId);
-
-          // Hapus dari daftar favorites agar langsung hilang dari UI
           favorites.removeWhere((item) => item.resep?.id == resepId);
+
+          if (showUnfavoriteNotice) {
+            _showPopupCustom(
+              title: 'Dihapus!',
+              text: 'Resep telah dihapus dari favorit ❌',
+              isFavorite: false,
+            );
+          }
         } else {
+          // Favorite
           favoriteIds.add(resepId);
 
-          // Tambah data baru ke favorites jika ada dalam response
           final data = jsonDecode(response.body);
           if (data['data'] != null) {
             favorites.add(FavoriteRecipeModel.fromJson(data['data']));
           }
+
+          _showPopupCustom(
+            title: 'Favorit!',
+            text: 'Resep telah ditambahkan ke favorit dengan bintang ✨',
+            isFavorite: true,
+          );
         }
       } else {
         print("Toggle gagal: ${response.body}");
@@ -91,5 +109,67 @@ class FavoriteRecipeController extends GetxController {
     }
   }
 
-  bool isFavorited(int resepId) => favoriteIds.contains(resepId);
+  /// Cek apakah resep sedang difavoritkan
+  bool isFavorited(int resepId) {
+    return favoriteIds.contains(resepId);
+  }
+
+  void _showPopupCustom({
+    required String title,
+    required String text,
+    required bool isFavorite,
+  }) {
+    if (Get.context != null) {
+      showDialog(
+        context: Get.context!,
+        barrierDismissible: false,
+        builder: (_) => AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: Row(
+            children: [
+              SizedBox(
+                height: 50,
+                width: 50,
+                child: Lottie.asset(
+                  isFavorite
+                      ? 'assets/star.json' // animasi saat favorite
+                      : 'assets/unfavorite.json', // animasi saat unfavorite
+                  repeat: false,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    color: isFavorite ? Colors.amber : Colors.red,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          content: Text(text),
+          actions: [
+            TextButton(
+              style: TextButton.styleFrom(
+                backgroundColor: isFavorite ? Colors.amber : Colors.red,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              onPressed: () => Navigator.of(Get.context!).pop(),
+              child: const Text(
+                'OK',
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+          ],
+        ),
+      );
+    } else {
+      Get.snackbar(title, text);
+    }
+  }
 }
