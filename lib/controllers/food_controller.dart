@@ -9,8 +9,14 @@ class FoodController {
     final uri = Uri.parse('${url}resep-all');
     final response = await http.get(uri);
 
+    print('getAllFoods status: ${response.statusCode}');
+    print('body: ${response.body}');
+
     if (response.statusCode == 200) {
-      final List<dynamic> dataList = jsonDecode(response.body);
+      final responseData = jsonDecode(response.body);
+      final List<dynamic> dataList =
+          responseData is List ? responseData : responseData['data'] ?? [];
+
       return dataList.map((jsonItem) => FoodModel.fromJson(jsonItem)).toList();
     } else {
       throw Exception('Gagal memuat daftar resep makanan');
@@ -22,27 +28,39 @@ class FoodController {
     final uri = Uri.parse('${url}resep/$id');
     final response = await http.get(uri);
 
-    if (response.statusCode == 200) {
-      final Map<String, dynamic> jsonData = jsonDecode(response.body);
+    print('getFoodById status: ${response.statusCode}');
+    print('body: ${response.body}');
 
-      // Ambil hanya bagian "data" dari respons API
-      if (jsonData.containsKey('data')) {
-        return FoodModel.fromJson(jsonData['data']);
-      } else {
+    if (response.statusCode == 200) {
+      final jsonData = jsonDecode(response.body);
+
+      final Map<String, dynamic> data = jsonData is Map<String, dynamic>
+          ? (jsonData['id'] != null ? jsonData : jsonData['data'] ?? {})
+          : {};
+
+      if (data.isEmpty || data['id'] == null) {
         throw Exception('Format data tidak sesuai');
       }
+
+      return FoodModel.fromJson(data);
     } else {
       throw Exception('Gagal memuat detail resep dengan ID $id');
     }
   }
 
-  // Tambahan: Ambil 3 resep terbaru untuk dashboard
+  // Ambil 3 resep terbaru untuk dashboard
   static Future<List<FoodModel>> getTop3Foods() async {
     final uri = Uri.parse('${url}resep-terbaru');
     final response = await http.get(uri);
 
+    print('getTop3Foods status: ${response.statusCode}');
+    print('body: ${response.body}');
+
     if (response.statusCode == 200) {
-      final List<dynamic> dataList = jsonDecode(response.body);
+      final responseData = jsonDecode(response.body);
+      final List<dynamic> dataList =
+          responseData is List ? responseData : responseData['data'] ?? [];
+
       return dataList.map((jsonItem) => FoodModel.fromJson(jsonItem)).toList();
     } else {
       throw Exception('Gagal memuat 3 resep terbaru');

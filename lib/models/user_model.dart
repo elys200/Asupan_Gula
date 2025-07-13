@@ -35,4 +35,24 @@ class UserModel {
     if (foto!.startsWith('http')) return foto;
     return '${url.replaceFirst('/api/', '/storage/')}$foto';
   }
+
+  UserModel copyWith({
+    int? id,
+    String? username,
+    String? email,
+    int? umur,
+    double? beratBadan,
+    String? jenisKelamin,
+    String? foto,
+  }) {
+    return UserModel(
+      id: id ?? this.id,
+      username: username ?? this.username,
+      email: email ?? this.email,
+      umur: umur ?? this.umur,
+      beratBadan: beratBadan ?? this.beratBadan,
+      jenisKelamin: jenisKelamin ?? this.jenisKelamin,
+      foto: foto,
+    );
+  }
 }

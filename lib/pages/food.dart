@@ -81,11 +81,19 @@ class _FoodPageState extends State<FoodPage> {
               food.nama.toLowerCase().contains(searchQuery.toLowerCase()))
           .toList();
 
+  Widget _buildAvatarPlaceholder({double radius = 18}) {
+    return CircleAvatar(
+      radius: radius,
+      backgroundColor: Colors.white,
+      child: Icon(Icons.person, size: radius, color: Colors.grey),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      extendBodyBehindAppBar: true,
+      resizeToAvoidBottomInset: false, // ✅ prevent layout from shifting
       body: SafeArea(
         top: false,
         bottom: false,
@@ -93,25 +101,31 @@ class _FoodPageState extends State<FoodPage> {
           children: [
             _buildHeader(context),
             Expanded(
-              child: isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : Padding(
-                      padding: const EdgeInsets.all(12.0),
-                      child: GridView.builder(
-                        itemCount: filteredFoodList.length,
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          mainAxisSpacing: 12,
-                          crossAxisSpacing: 12,
-                          childAspectRatio: 0.9,
-                        ),
-                        itemBuilder: (context, index) => FoodCard(
-                          food: filteredFoodList[index],
-                          favoriteController: favoriteController,
+              child: GestureDetector(
+                onTap: () => FocusScope.of(context)
+                    .unfocus(), // ✅ dismiss keyboard on tap
+                child: isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : Padding(
+                        padding: const EdgeInsets.all(12.0),
+                        child: GridView.builder(
+                          keyboardDismissBehavior:
+                              ScrollViewKeyboardDismissBehavior.onDrag,
+                          itemCount: filteredFoodList.length,
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            mainAxisSpacing: 12,
+                            crossAxisSpacing: 12,
+                            childAspectRatio: 0.9,
+                          ),
+                          itemBuilder: (context, index) => FoodCard(
+                            food: filteredFoodList[index],
+                            favoriteController: favoriteController,
+                          ),
                         ),
                       ),
-                    ),
+              ),
             ),
           ],
         ),
@@ -156,17 +170,13 @@ class _FoodPageState extends State<FoodPage> {
                     ),
                   ),
                 ),
-                user?.fotoUrl != null && user!.fotoUrl!.isNotEmpty
-                    ? CircleAvatar(
-                        radius: 18,
-                        backgroundImage:
-                            CachedNetworkImageProvider(user.fotoUrl!),
-                      )
-                    : const CircleAvatar(
-                        radius: 18,
-                        backgroundImage:
-                            AssetImage('assets/images/portrait.png'),
-                      ),
+                if (user?.fotoUrl != null && user!.fotoUrl!.isNotEmpty)
+                  CircleAvatar(
+                    radius: 18,
+                    backgroundImage: CachedNetworkImageProvider(user.fotoUrl!),
+                  )
+                else
+                  _buildAvatarPlaceholder(radius: 18),
               ],
             ),
             const SizedBox(height: 20),
@@ -232,11 +242,16 @@ class FoodCard extends StatelessWidget {
               ClipRRect(
                 borderRadius:
                     const BorderRadius.vertical(top: Radius.circular(15)),
-                child: Image.network(
-                  food.fotoUrl ?? 'https://via.placeholder.com/150',
+                child: CachedNetworkImage(
+                  imageUrl: food.fotoUrl ?? 'https://via.placeholder.com/150',
                   height: 100,
                   width: double.infinity,
                   fit: BoxFit.cover,
+                  placeholder: (context, url) => const Center(
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                  errorWidget: (context, url, error) =>
+                      const Icon(Icons.broken_image),
                 ),
               ),
               const SizedBox(height: 6),

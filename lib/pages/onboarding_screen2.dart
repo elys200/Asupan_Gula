@@ -112,21 +112,6 @@ class _OnboardingScreen2State extends State<OnboardingScreen2>
               ),
             ),
 
-            // Dot indikator
-            Positioned(
-              top: size.height * 0.6,
-              left: 0,
-              right: 0,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  _dot(isActive: false),
-                  _dot(isActive: true),
-                  _dot(isActive: false),
-                ],
-              ),
-            ),
-
             // Tombol next dengan arc animated
             Positioned(
               bottom: 40,
@@ -165,19 +150,6 @@ class _OnboardingScreen2State extends State<OnboardingScreen2>
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  // Dot indikator
-  Widget _dot({required bool isActive}) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 4),
-      width: isActive ? 10 : 6,
-      height: isActive ? 10 : 6,
-      decoration: BoxDecoration(
-        color: isActive ? Colors.white : Colors.white60,
-        shape: BoxShape.circle,
       ),
     );
   }

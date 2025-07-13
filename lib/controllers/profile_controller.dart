@@ -13,6 +13,8 @@ class ProfileController extends GetxController {
   final user = Rxn<UserModel>();
   final isLoading = false.obs;
   final imageFile = Rxn<File>();
+  final isChangingPassword = false.obs;
+  final isUpdatingProfile = false.obs;
 
   final dio = dioLib.Dio(
     dioLib.BaseOptions(
@@ -65,17 +67,20 @@ class ProfileController extends GetxController {
   }
 
   // Update data profil user
-  Future<void> updateProfile({
+  Future<bool> updateProfile({
     String? username,
     String? email,
     String? jenisKelamin,
     int? umur,
-    double? beratBadan, File? imageFile,
+    double? beratBadan,
+    File? imageFile,
   }) async {
     final token = _auth.token.value;
     if (token == null) {
-      throw Exception('Silakan login terlebih dahulu.');
+      return false;
     }
+
+    isUpdatingProfile.value = true;
 
     try {
       final formData = dioLib.FormData.fromMap({
@@ -87,16 +92,18 @@ class ProfileController extends GetxController {
         if (beratBadan != null) 'berat_badan': beratBadan.toString(),
       });
 
-      final res = await dio.post(
+      final res = await dio.put(
         'user/profile',
         data: formData,
         options: dioLib.Options(headers: {'Authorization': 'Bearer $token'}),
       );
 
       user.value = UserModel.fromJson(res.data['user']);
-      Get.snackbar('Berhasil', 'Profil berhasil diperbarui');
+      return true;
     } catch (e) {
-      Get.snackbar('Error', 'Gagal memperbarui profil.\n${e.toString()}');
+      return false;
+    } finally {
+      isUpdatingProfile.value = false;
     }
   }
 
@@ -124,9 +131,7 @@ class ProfileController extends GetxController {
           filename: fotoFile.path.split('/').last,
           contentType: MediaType(mimeSplit[0], mimeSplit[1]),
         );
-      }
-
-      else if (fotoBytes != null && filename != null) {
+      } else if (fotoBytes != null && filename != null) {
         final mimeType = lookupMimeType(filename) ?? 'image/jpeg';
         final mimeSplit = mimeType.split('/');
 
@@ -160,9 +165,8 @@ class ProfileController extends GetxController {
     }
   }
 
-  // Update kata sandi user
-  Future<void> changePassword(
-      String current, String newPassword, String confirm) async {
+  //Hapus Foto
+  Future<void> removeProfileImage() async {
     final token = _auth.token.value;
     if (token == null) {
       Get.snackbar('Error', 'Silakan login terlebih dahulu.');
@@ -170,7 +174,38 @@ class ProfileController extends GetxController {
     }
 
     try {
-      final res = await dio.post(
+      final res = await dio.delete(
+        'user/profile/foto',
+        options: dioLib.Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+
+      if (res.statusCode == 200) {
+        user.value = user.value?.copyWith(foto: null);
+        imageFile.value = null;
+        Get.snackbar('Berhasil', 'Foto profil berhasil dihapus');
+      } else {
+        Get.snackbar('Error', 'Gagal menghapus foto profil.');
+      }
+    } catch (e) {
+      Get.snackbar('Error', 'Gagal menghapus foto profil.\n$e');
+    }
+  }
+
+  // Mengganti kata sandi user
+  Future<Map<String, dynamic>> changePassword(
+    String current,
+    String newPassword,
+    String confirm,
+  ) async {
+    final token = _auth.token.value;
+    if (token == null) {
+      return {'success': false, 'message': 'Silakan login terlebih dahulu.'};
+    }
+
+    isChangingPassword.value = true;
+
+    try {
+      final response = await dio.post(
         'user/profile/change-password',
         data: {
           'current_password': current,
@@ -180,13 +215,33 @@ class ProfileController extends GetxController {
         options: dioLib.Options(headers: {'Authorization': 'Bearer $token'}),
       );
 
-      if (res.statusCode == 200) {
-        Get.snackbar('Sukses', 'Kata sandi berhasil diubah');
+      if (response.statusCode == 200) {
+        return {
+          'success': true,
+          'message': response.data['message'] ?? 'Kata sandi berhasil diubah.'
+        };
       } else {
-        Get.snackbar('Gagal', res.data['message'] ?? 'Terjadi kesalahan');
+        return {'success': false, 'message': 'Gagal mengubah kata sandi.'};
       }
+    } on dioLib.DioError catch (e) {
+      if (e.response != null) {
+        final data = e.response?.data;
+
+        if (data != null && data['errors'] != null) {
+          final errors = data['errors'] as Map<String, dynamic>;
+          final firstError = errors.values.first;
+          final message =
+              firstError is List ? firstError.first : firstError.toString();
+          return {'success': false, 'message': message};
+        } else if (data != null && data['message'] != null) {
+          return {'success': false, 'message': data['message']};
+        }
+      }
+      return {'success': false, 'message': 'Tidak dapat menghubungi server.'};
     } catch (e) {
-      Get.snackbar('Error', 'Gagal menghubungi server.\n$e');
+      return {'success': false, 'message': 'Kesalahan tak terduga: $e'};
+    } finally {
+      isChangingPassword.value = false;
     }
   }
 

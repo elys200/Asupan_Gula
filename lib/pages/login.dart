@@ -110,53 +110,69 @@ class _LoginScreenState extends State<LoginScreen> {
                     obscureText: true,
                   ),
                   SizedBox(height: screenHeight * 0.04),
+
+                  // Tombol Login
                   Align(
                     alignment: Alignment.centerLeft,
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        final username = usernameController.text.trim();
-                        final password = passwordController.text.trim();
+                    child: Obx(() => ElevatedButton(
+                          onPressed: _authController.isLoading.value
+                              ? null
+                              : () async {
+                                  final username =
+                                      usernameController.text.trim();
+                                  final password =
+                                      passwordController.text.trim();
 
-                        if (username.isEmpty || password.isEmpty) {
-                          Get.snackbar(
-                            'Login Gagal',
-                            'Username dan password tidak boleh kosong',
-                            backgroundColor: Colors.redAccent,
-                            colorText: Colors.white,
-                          );
-                          return;
-                        }
+                                  if (username.isEmpty || password.isEmpty) {
+                                    Get.snackbar(
+                                      'Login Gagal',
+                                      'Username dan password tidak boleh kosong',
+                                      backgroundColor: Colors.redAccent,
+                                      colorText: Colors.white,
+                                    );
+                                    return;
+                                  }
 
-                        final result = await _authController.login(
-                          username: username,
-                          password: password,
-                        );
+                                  final result = await _authController.login(
+                                    username: username,
+                                    password: password,
+                                  );
 
-                        if (result != null) {
-                          Get.offAllNamed('/dashboard');
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFFF5858),
-                        padding: EdgeInsets.symmetric(
-                          horizontal: screenWidth * 0.12,
-                          vertical: screenHeight * 0.011,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius:
-                              BorderRadius.circular(screenWidth * 0.03),
-                        ),
-                        elevation: 5,
-                      ),
-                      child: Text(
-                        'Login',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: screenWidth * 0.04,
-                        ),
-                      ),
-                    ),
+                                  if (result != null) {
+                                    Get.offAllNamed('/dashboard');
+                                  }
+                                },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFFF5858),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: screenWidth * 0.12,
+                              vertical: screenHeight * 0.011,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius:
+                                  BorderRadius.circular(screenWidth * 0.03),
+                            ),
+                            elevation: 5,
+                          ),
+                          child: _authController.isLoading.value
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : Text(
+                                  'Login',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: screenWidth * 0.04,
+                                  ),
+                                ),
+                        )),
                   ),
+
                   SizedBox(height: screenHeight * 0.01),
                   Align(
                     alignment: Alignment.centerLeft,

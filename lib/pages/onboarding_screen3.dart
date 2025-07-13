@@ -76,7 +76,8 @@ class _OnboardingScreen3State extends State<OnboardingScreen3>
               right: 0,
               child: Container(
                 height: size.height * 0.58,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
                 decoration: const BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
@@ -112,21 +113,6 @@ class _OnboardingScreen3State extends State<OnboardingScreen3>
               ),
             ),
 
-            // Dot indikator
-            Positioned(
-              top: size.height * 0.6,
-              left: 0,
-              right: 0,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  _dot(isActive: false),
-                  _dot(isActive: false),
-                  _dot(isActive: true),
-                ],
-              ),
-            ),
-
             // Tombol next dengan animasi arc progress
             Positioned(
               bottom: 40,
@@ -141,7 +127,8 @@ class _OnboardingScreen3State extends State<OnboardingScreen3>
                       animation: _controller,
                       builder: (context, child) {
                         return CustomPaint(
-                          painter: AnimatedArcPainter(sweep: _sweepAnimation.value),
+                          painter:
+                              AnimatedArcPainter(sweep: _sweepAnimation.value),
                         );
                       },
                     ),
@@ -157,7 +144,8 @@ class _OnboardingScreen3State extends State<OnboardingScreen3>
                         color: Color(0xFFFF3D00),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.arrow_forward, color: Colors.white),
+                      child:
+                          const Icon(Icons.arrow_forward, color: Colors.white),
                     ),
                   ),
                 ],
@@ -165,19 +153,6 @@ class _OnboardingScreen3State extends State<OnboardingScreen3>
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  // Dot indikator
-  Widget _dot({required bool isActive}) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 4),
-      width: isActive ? 10 : 6,
-      height: isActive ? 10 : 6,
-      decoration: BoxDecoration(
-        color: isActive ? Colors.white : Colors.white60,
-        shape: BoxShape.circle,
       ),
     );
   }

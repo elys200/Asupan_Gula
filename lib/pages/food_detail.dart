@@ -16,6 +16,8 @@ class _FoodDetailPageState extends State<FoodDetailPage> {
   @override
   Widget build(BuildContext context) {
     final food = widget.food;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -23,13 +25,13 @@ class _FoodDetailPageState extends State<FoodDetailPage> {
         child: SingleChildScrollView(
           child: Column(
             children: [
-              // Header image & back button
+              // Header + Floating Image
               Stack(
                 clipBehavior: Clip.none,
                 children: [
                   Container(
                     width: double.infinity,
-                    height: 280,
+                    height: screenHeight * 0.25,
                     decoration: const BoxDecoration(
                       gradient: LinearGradient(
                         colors: [Color(0xFFE43A15), Color(0xFFE65245)],
@@ -41,62 +43,62 @@ class _FoodDetailPageState extends State<FoodDetailPage> {
                         bottomRight: Radius.circular(40),
                       ),
                     ),
-                    child: Column(
-                      children: [
-                        const SizedBox(height: 40),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            IconButton(
-                              icon: const Icon(Icons.arrow_back,
-                                  color: Colors.white),
-                              onPressed: () => Navigator.pop(context),
-                            ),
-                            const Text(
-                              "Detail Makanan",
-                              style: TextStyle(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(
+                          horizontal: screenWidth * 0.05,
+                          vertical: screenHeight * 0.03),
+                      child: Column(
+                        children: [
+                          Row(
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.arrow_back,
+                                    color: Colors.white),
+                                onPressed: () => Navigator.pop(context),
+                              ),
+                              const Spacer(),
+                              const Text(
+                                "Detail Makanan",
+                                style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 18,
-                                  fontWeight: FontWeight.bold),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.favorite_border,
-                                  color: Colors.white),
-                              onPressed: () {},
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 30),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(100),
-                          child: Image.network(
-                            food.fotoUrl ?? 'https://via.placeholder.com/200',
-                            height: 200,
-                            width: 200,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) =>
-                                const Icon(Icons.broken_image,
-                                    size: 100, color: Colors.white),
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const Spacer(),
+                              const SizedBox(
+                                  width:
+                                      48), // Untuk menggantikan space icon favorit yang dihapus
+                            ],
                           ),
-                        ),
-                        const SizedBox(height: 30),
-                        Text(
-                            "${food.totalKalori?.toStringAsFixed(0) ?? '0'} kcal",
-                            style: const TextStyle(color: Colors.white)),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                   Positioned(
-                    bottom: -30,
-                    left: 0,
-                    right: 0,
+                    top: screenHeight * 0.17,
+                    left: screenWidth / 2 - 60,
                     child: Container(
-                      height: 60,
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(40),
-                          topRight: Radius.circular(40),
+                      width: 120,
+                      height: 120,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black26,
+                            blurRadius: 10,
+                            offset: Offset(0, 5),
+                          )
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(60),
+                        child: Image.network(
+                          food.fotoUrl ?? 'https://via.placeholder.com/200',
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) =>
+                              const Icon(Icons.broken_image,
+                                  size: 100, color: Colors.white),
                         ),
                       ),
                     ),
@@ -104,35 +106,43 @@ class _FoodDetailPageState extends State<FoodDetailPage> {
                 ],
               ),
 
+              const SizedBox(height: 80),
+
               // Content
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      food.nama,
-                      style: const TextStyle(
-                          fontSize: 22, fontWeight: FontWeight.bold),
+                    // Nama makanan
+                    Center(
+                      child: Text(
+                        food.nama,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: screenWidth * 0.06,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 10),
 
-                    // Nutrition info
+                    // Nutrisi
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
                         NutritionInfo(
                             label: 'Kalori',
                             value:
-                                "${food.totalKalori?.toStringAsFixed(0) ?? '0'}"),
+                                "${food.totalKalori?.toStringAsFixed(0) ?? '0'} kj"),
                         NutritionInfo(
                             label: 'Karbohidrat',
                             value:
-                                "${food.totalKarbohidrat?.toStringAsFixed(0) ?? '0'}"),
+                                "${food.totalKarbohidrat?.toStringAsFixed(0) ?? '0'}g"),
                         NutritionInfo(
                             label: 'Lemak',
                             value:
-                                "${food.totalLemak?.toStringAsFixed(0) ?? '0'}"),
+                                "${food.totalLemak?.toStringAsFixed(0) ?? '0'}g"),
                         NutritionInfo(
                             label: 'Gula',
                             value:
@@ -141,7 +151,7 @@ class _FoodDetailPageState extends State<FoodDetailPage> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Deskripsi dengan Read More
+                    // Deskripsi
                     LayoutBuilder(
                       builder: (context, constraints) {
                         final span = TextSpan(
@@ -193,8 +203,6 @@ class _FoodDetailPageState extends State<FoodDetailPage> {
                         style: TextStyle(
                             fontSize: 20, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 10),
-
-                    // Bahan jadi bullet list tanpa foto
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: food.bahan.map((bahan) {

@@ -69,6 +69,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  Widget _buildAvatarPlaceholder() {
+    return const CircleAvatar(
+      radius: 30,
+      backgroundColor: Colors.white,
+      child: Icon(Icons.person, size: 30, color: Colors.grey),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -145,13 +153,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     right: 16,
                     child: Row(
                       children: [
-                        CircleAvatar(
-                          radius: 30,
-                          backgroundImage: user?.foto != null &&
-                                  user!.foto!.isNotEmpty
-                              ? NetworkImage(user.foto!) as ImageProvider
-                              : const AssetImage('assets/images/portrait.png'),
-                        ),
+                        user?.foto != null && user!.foto!.isNotEmpty
+                            ? CircleAvatar(
+                                radius: 30,
+                                backgroundImage: NetworkImage(user.foto!),
+                              )
+                            : _buildAvatarPlaceholder(),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
@@ -231,7 +238,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               width: double.infinity,
                               child: ElevatedButton(
                                 onPressed: () {
-                                  Navigator.pushNamed(context, '/jurnal');
+                                  Get.toNamed('/jurnal');
                                 },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: const Color(0xFFF94F45),

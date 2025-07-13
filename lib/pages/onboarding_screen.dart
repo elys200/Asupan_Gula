@@ -121,21 +121,6 @@ class _OnboardingScreenState extends State<OnboardingScreen>
               ),
             ),
 
-            // Dot indikator
-            Positioned(
-              top: size.height * 0.6,
-              left: 0,
-              right: 0,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  _dot(isActive: widget.progressStep == 1),
-                  _dot(isActive: widget.progressStep == 2),
-                  _dot(isActive: widget.progressStep == 3),
-                ],
-              ),
-            ),
-
             // Tombol Next dengan Arc
             Positioned(
               bottom: 40,
@@ -166,7 +151,8 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                         Navigator.pushNamedAndRemoveUntil(
                             context, '/onboarding_screen3', (route) => false);
                       } else {
-                        Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+                        Navigator.pushNamedAndRemoveUntil(
+                            context, '/home', (route) => false);
                       }
                     },
                     child: Container(
@@ -185,18 +171,6 @@ class _OnboardingScreenState extends State<OnboardingScreen>
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _dot({required bool isActive}) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 4),
-      width: isActive ? 10 : 6,
-      height: isActive ? 10 : 6,
-      decoration: BoxDecoration(
-        color: isActive ? Colors.white : Colors.white60,
-        shape: BoxShape.circle,
       ),
     );
   }
