@@ -7,9 +7,15 @@ class JurnalController extends GetxController {
 
   RxList<JurnalEntry> jurnalList = <JurnalEntry>[].obs;
   RxBool isLoading = false.obs;
+  RxBool isFetchingMore = false.obs;
   RxString error = ''.obs;
+  RxBool hasMore = true.obs;
 
+  int currentPage = 1;
+  final int perPage = 10;
   int? userId;
+
+  RxInt totalEntries = 0.obs;
 
   JurnalController(this.apiService);
 
@@ -17,17 +23,44 @@ class JurnalController extends GetxController {
     userId = id;
   }
 
-  Future<void> fetchJurnal() async {
+  Future<void> fetchJurnal({bool refresh = false}) async {
     if (userId == null) {
-      error.value = 'User ID belum diatur';
+      error.value = 'User ID not set';
       return;
     }
 
+    if (refresh) {
+      currentPage = 1;
+      hasMore.value = true;
+      jurnalList.clear();
+    }
+
+    if (!hasMore.value && !refresh) return;
+
     isLoading.value = true;
     error.value = '';
+
     try {
-      final list = await apiService.fetchJurnal(userId!);
-      jurnalList.assignAll(list);
+      final result = await apiService.fetchJurnal(
+        userId!,
+        page: currentPage,
+        perPage: perPage,
+      );
+
+      if (refresh) {
+        jurnalList.assignAll(result.entries);
+      } else {
+        jurnalList.addAll(result.entries);
+      }
+
+      totalEntries.value = result.total;
+
+      // apakah sudah di halaman terakhir?
+      hasMore.value = currentPage < result.lastPage;
+
+      if (hasMore.value) {
+        currentPage++;
+      }
     } catch (e) {
       error.value = e.toString();
     } finally {
@@ -35,15 +68,23 @@ class JurnalController extends GetxController {
     }
   }
 
+  Future<void> loadMore() async {
+    if (!isLoading.value && !isFetchingMore.value && hasMore.value) {
+      isFetchingMore.value = true;
+      await fetchJurnal();
+      isFetchingMore.value = false;
+    }
+  }
+
   Future<void> tambahJurnal(JurnalEntry entry) async {
     if (userId == null) {
-      error.value = 'User ID belum diatur';
+      error.value = 'User ID not set';
       return;
     }
 
     try {
       await apiService.tambahJurnal(entry, userId!);
-      await fetchJurnal(); // refresh
+      await fetchJurnal(refresh: true);
     } catch (e) {
       error.value = e.toString();
     }
@@ -51,13 +92,13 @@ class JurnalController extends GetxController {
 
   Future<void> hapusJurnal(int id) async {
     if (userId == null) {
-      error.value = 'User ID belum diatur';
+      error.value = 'User ID not set';
       return;
     }
 
     try {
       await apiService.hapusJurnal(id);
-      await fetchJurnal(); // refresh
+      await fetchJurnal(refresh: true);
     } catch (e) {
       error.value = e.toString();
     }

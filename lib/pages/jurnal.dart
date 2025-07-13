@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../controllers/jurnal_controller.dart';
 import '../models/jurnal_entry.dart';
 import '../services/jurnal_service.dart';
@@ -16,34 +17,55 @@ class _JurnalPageState extends State<JurnalPage>
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late JurnalController _controller;
+  late ScrollController _scrollController;
   String selectedFilter = "Weekly";
+
+  late int _userId;
 
   @override
   void initState() {
     super.initState();
 
-    // Get token from storage/authentication service
-    String token =
-        _getTokenFromStorage(); // Implement this method based on your auth system
+    _scrollController = ScrollController()..addListener(_scrollListener);
 
-    // Initialize controller with dependency injection
+    String token = _getTokenFromStorage();
     _controller = Get.put(JurnalController(JurnalApiService(token: token)));
 
-    // Set user ID (you should get this from authentication or user session)
-    _controller
-        .setUserId(1); // Replace with actual user ID from your auth system
+    // Ambil user id dari storage
+    _loadUserId().then((_) {
+      _controller.setUserId(_userId);
+      _controller.fetchJurnal();
+    });
 
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
+
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
-    _animationController.forward();
 
-    // Load data on initialization
-    _controller.fetchJurnal();
+    _animationController.forward();
+  }
+
+  Future<void> _loadUserId() async {
+    final prefs = await SharedPreferences.getInstance();
+    _userId = prefs.getInt('user_id') ?? 1;
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  void _scrollListener() {
+    if (_scrollController.position.pixels ==
+        _scrollController.position.maxScrollExtent) {
+      _controller.loadMore();
+    }
   }
 
   // Helper method to get token from storage
@@ -300,7 +322,8 @@ class _JurnalPageState extends State<JurnalPage>
               child: FadeTransition(
                 opacity: _fadeAnimation,
                 child: Obx(() {
-                  if (_controller.isLoading.value) {
+                  if (_controller.isLoading.value &&
+                      _controller.jurnalList.isEmpty) {
                     return const Center(child: CircularProgressIndicator());
                   }
 
@@ -313,10 +336,24 @@ class _JurnalPageState extends State<JurnalPage>
                   }
 
                   return ListView.builder(
-                    itemCount: _controller.jurnalList.length,
+                    controller: _scrollController,
+                    itemCount: _controller.jurnalList.length +
+                        (_controller.hasMore.value ? 1 : 0),
                     padding:
                         EdgeInsets.symmetric(horizontal: screenWidth * 0.04),
                     itemBuilder: (context, index) {
+                      // Show loading indicator at the end if there's more data
+                      if (index >= _controller.jurnalList.length) {
+                        return Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: _controller.isFetchingMore.value
+                                ? const CircularProgressIndicator()
+                                : const SizedBox(),
+                          ),
+                        );
+                      }
+
                       final entry = _controller.jurnalList[index];
                       return TweenAnimationBuilder<double>(
                         duration: Duration(milliseconds: 300 + (index * 100)),
@@ -333,10 +370,10 @@ class _JurnalPageState extends State<JurnalPage>
                         child: JurnalCard(
                           tanggal: entry.tanggal,
                           waktuMakan: entry.waktuMakan,
-                          status: entry.status ?? '-', // kalau null tampil "-"
+                          status: entry.status ?? '-',
                           statusColor:
                               _hexToColor(entry.statusColor ?? '#000000'),
-                          jam: entry.jam ?? '-', // kalau null tampil "-"
+                          jam: entry.jam ?? '-',
                           kalori: (entry.totalKalori ?? 0).toStringAsFixed(0),
                           karbo: (entry.totalKarbo ?? 0).toStringAsFixed(0),
                           lemak: (entry.totalLemak ?? 0).toStringAsFixed(0),
