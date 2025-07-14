@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../controllers/jurnal_controller.dart';
-import '../models/jurnal_entry.dart';
 import '../services/jurnal_service.dart';
+import '../controllers/profile_controller.dart';
 
 class JurnalPage extends StatefulWidget {
   const JurnalPage({Key? key}) : super(key: key);
@@ -18,24 +18,18 @@ class _JurnalPageState extends State<JurnalPage>
   late Animation<double> _fadeAnimation;
   late JurnalController _controller;
   late ScrollController _scrollController;
+  late final ProfileController profileController;
   String selectedFilter = "Weekly";
 
-  late int _userId;
+  RxBool isReady = false.obs;
 
   @override
   void initState() {
     super.initState();
+    profileController = Get.put(ProfileController());
+    profileController.fetchProfile();
 
     _scrollController = ScrollController()..addListener(_scrollListener);
-
-    String token = _getTokenFromStorage();
-    _controller = Get.put(JurnalController(JurnalApiService(token: token)));
-
-    // Ambil user id dari storage
-    _loadUserId().then((_) {
-      _controller.setUserId(_userId);
-      _controller.fetchJurnal();
-    });
 
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 300),
@@ -46,12 +40,27 @@ class _JurnalPageState extends State<JurnalPage>
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
 
+    _loadUserIdAndToken();
+
     _animationController.forward();
   }
 
-  Future<void> _loadUserId() async {
+  Future<void> _loadUserIdAndToken() async {
     final prefs = await SharedPreferences.getInstance();
-    _userId = prefs.getInt('user_id') ?? 1;
+    final token = prefs.getString('token') ?? '';
+    final userId = prefs.getInt('user_id') ?? 1;
+
+    _controller = Get.put(
+      JurnalController(JurnalApiService(token: token)),
+      permanent: true,
+    );
+
+    _controller.setUserId(userId);
+    _controller.setToken(token);
+
+    await _controller.fetchJurnal(refresh: true);
+
+    isReady.value = true;
   }
 
   @override
@@ -68,34 +77,22 @@ class _JurnalPageState extends State<JurnalPage>
     }
   }
 
-  // Helper method to get token from storage
-  String _getTokenFromStorage() {
-    // TODO: Implement based on your authentication system
-    // This could be from SharedPreferences, GetStorage, or any other storage method
-    // For example:
-    // return GetStorage().read('token') ?? '';
-    return "your_token_here"; // Replace with actual token retrieval
-  }
-
-  // Helper method to convert hex color string to Color object
+  // Helper method untuk mengonversi hex color ke Color
   Color _hexToColor(String hexColor) {
     try {
-      // Remove # if present
       hexColor = hexColor.replaceAll('#', '');
 
-      // Add opacity if not present
       if (hexColor.length == 6) {
         hexColor = 'FF$hexColor';
       }
 
       return Color(int.parse(hexColor, radix: 16));
     } catch (e) {
-      // Return default color if parsing fails
-      return Colors.green; // Default for normal status
+      return Colors.green;
     }
   }
 
-  // Helper methods for statistics
+  // Helper methods untuk menghitung jumlah entri jurnal dalam seminggu
   int _getWeeklyCount() {
     final now = DateTime.now();
     final weekStart = now.subtract(Duration(days: now.weekday - 1));
@@ -123,272 +120,273 @@ class _JurnalPageState extends State<JurnalPage>
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       body: SafeArea(
-        child: Column(
-          children: [
-            // Header Section
-            Container(
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [
-                    Color(0xFFE43A15),
-                    Color(0xFFE65245),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(32),
-                  bottomRight: Radius.circular(32),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 20,
-                    offset: const Offset(0, 10),
+        child: Obx(() {
+          if (!isReady.value) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          return Column(
+            children: [
+              // Header Section
+              Container(
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [
+                      Color(0xFFE43A15),
+                      Color(0xFFE65245),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
-                ],
-              ),
-              padding: EdgeInsets.fromLTRB(
-                screenWidth * 0.06,
-                screenHeight * 0.02,
-                screenWidth * 0.06,
-                screenHeight * 0.03,
-              ),
-              width: double.infinity,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      // Back Button
-                      GestureDetector(
-                        onTap: () => Navigator.of(context)
-                            .pushReplacementNamed('/dashboard'),
-                        child: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: Colors.white.withOpacity(0.3),
-                              width: 1,
-                            ),
-                          ),
-                          child: Icon(
-                            Icons.arrow_back_ios_new,
-                            color: Colors.white,
-                            size: screenWidth * 0.05,
-                          ),
-                        ),
-                      ),
-                      // Title Section
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Text(
-                              "Hi Mia 👋",
-                              style: TextStyle(
-                                color: Colors.white.withOpacity(0.9),
-                                fontSize: screenWidth * 0.04,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            SizedBox(height: screenHeight * 0.005),
-                            Text(
-                              "Rekam Jejak\nMakanmu",
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: screenWidth * 0.07,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                                height: 1.2,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      // Icon with refresh button
-                      Row(
-                        children: [
-                          // Refresh button using GetX
-                          Obx(() => GestureDetector(
-                                onTap: _controller.isLoading.value
-                                    ? null
-                                    : () => _controller.fetchJurnal(),
-                                child: Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.2),
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(
-                                      color: Colors.white.withOpacity(0.3),
-                                      width: 1,
-                                    ),
-                                  ),
-                                  child: _controller.isLoading.value
-                                      ? SizedBox(
-                                          width: screenWidth * 0.05,
-                                          height: screenWidth * 0.05,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                            valueColor:
-                                                AlwaysStoppedAnimation<Color>(
-                                                    Colors.white),
-                                          ),
-                                        )
-                                      : Icon(
-                                          Icons.refresh,
-                                          color: Colors.white,
-                                          size: screenWidth * 0.05,
-                                        ),
-                                ),
-                              )),
-                          SizedBox(width: screenWidth * 0.02),
-                          Container(
-                            padding: const EdgeInsets.all(12),
+                  borderRadius: const BorderRadius.only(
+                    bottomLeft: Radius.circular(32),
+                    bottomRight: Radius.circular(32),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                ),
+                padding: EdgeInsets.fromLTRB(
+                  screenWidth * 0.06,
+                  screenHeight * 0.02,
+                  screenWidth * 0.06,
+                  screenHeight * 0.03,
+                ),
+                width: double.infinity,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        GestureDetector(
+                          onTap: () => Navigator.of(context)
+                              .pushReplacementNamed('/dashboard'),
+                          child: Container(
+                            padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
                               color: Colors.white.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(16),
+                              borderRadius: BorderRadius.circular(12),
                               border: Border.all(
                                 color: Colors.white.withOpacity(0.3),
                                 width: 1,
                               ),
                             ),
                             child: Icon(
-                              Icons.restaurant_menu,
+                              Icons.arrow_back_ios_new,
                               color: Colors.white,
-                              size: screenWidth * 0.06,
+                              size: screenWidth * 0.05,
                             ),
                           ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: screenHeight * 0.02),
-                  // Quick Stats - Using GetX reactive data
-                  Obx(() => Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: Colors.white.withOpacity(0.2),
-                            width: 1,
+                        ),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Obx(() {
+                                final user = profileController.user.value;
+                                return Text(
+                                  "Hi, ${user?.username ?? 'User'}!",
+                                  style: TextStyle(
+                                    color: Colors.white.withOpacity(0.9),
+                                    fontSize: screenWidth * 0.04,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                );
+                              }),
+                              SizedBox(height: screenHeight * 0.005),
+                              Text(
+                                "Rekam Jejak\nMakanmu",
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: screenWidth * 0.07,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                  height: 1.2,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        Row(
                           children: [
-                            _buildQuickStat(
-                                "Entries",
-                                "${_controller.jurnalList.length}",
-                                Icons.bookmark),
-                            _buildQuickStat("This Week", "${_getWeeklyCount()}",
-                                Icons.calendar_today),
-                            _buildQuickStat(
-                                "Avg Cal",
-                                "${_getAverageCalories()}k",
-                                Icons.local_fire_department),
+                            Obx(() => GestureDetector(
+                                  onTap: _controller.isLoading.value
+                                      ? null
+                                      : () => _controller.fetchJurnal(),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.2),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: Colors.white.withOpacity(0.3),
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: _controller.isLoading.value
+                                        ? SizedBox(
+                                            width: screenWidth * 0.05,
+                                            height: screenWidth * 0.05,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              valueColor:
+                                                  AlwaysStoppedAnimation<Color>(
+                                                      Colors.white),
+                                            ),
+                                          )
+                                        : Icon(
+                                            Icons.refresh,
+                                            color: Colors.white,
+                                            size: screenWidth * 0.05,
+                                          ),
+                                  ),
+                                )),
+                            SizedBox(width: screenWidth * 0.02),
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: Colors.white.withOpacity(0.3),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Icon(
+                                Icons.restaurant_menu,
+                                color: Colors.white,
+                                size: screenWidth * 0.06,
+                              ),
+                            ),
                           ],
                         ),
-                      )),
-                ],
-              ),
-            ),
-
-            // Filter Section
-            Padding(
-              padding: EdgeInsets.all(screenWidth * 0.04),
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    _buildFilterButton("Today", screenWidth),
-                    SizedBox(width: screenWidth * 0.03),
-                    _buildFilterButton("Weekly", screenWidth),
-                    SizedBox(width: screenWidth * 0.03),
-                    _buildFilterButton("Monthly", screenWidth),
-                    SizedBox(width: screenWidth * 0.03),
-                    _buildFilterButton("Yearly", screenWidth),
+                      ],
+                    ),
+                    SizedBox(height: screenHeight * 0.02),
+                    Obx(() => Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: Colors.white.withOpacity(0.2),
+                              width: 1,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: [
+                              _buildQuickStat(
+                                  "Entries",
+                                  "${_controller.jurnalList.length}",
+                                  Icons.bookmark),
+                              _buildQuickStat("This Week",
+                                  "${_getWeeklyCount()}", Icons.calendar_today),
+                              _buildQuickStat(
+                                  "Avg Cal",
+                                  "${_getAverageCalories()}k",
+                                  Icons.local_fire_department),
+                            ],
+                          ),
+                        )),
                   ],
                 ),
               ),
-            ),
 
-            // Journal Entries List - Using GetX reactive data
-            Expanded(
-              child: FadeTransition(
-                opacity: _fadeAnimation,
-                child: Obx(() {
-                  if (_controller.isLoading.value &&
-                      _controller.jurnalList.isEmpty) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
+              // Filter Buttons
+              Padding(
+                padding: EdgeInsets.all(screenWidth * 0.04),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      _buildFilterButton("Today", screenWidth),
+                      SizedBox(width: screenWidth * 0.03),
+                      _buildFilterButton("Weekly", screenWidth),
+                      SizedBox(width: screenWidth * 0.03),
+                      _buildFilterButton("Monthly", screenWidth),
+                      SizedBox(width: screenWidth * 0.03),
+                      _buildFilterButton("Yearly", screenWidth),
+                    ],
+                  ),
+                ),
+              ),
 
-                  if (_controller.error.value.isNotEmpty) {
-                    return _buildErrorState(screenWidth, screenHeight);
-                  }
+              // Journal Entries
+              Expanded(
+                child: FadeTransition(
+                  opacity: _fadeAnimation,
+                  child: Obx(() {
+                    if (_controller.isLoading.value &&
+                        _controller.jurnalList.isEmpty) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
 
-                  if (_controller.jurnalList.isEmpty) {
-                    return _buildEmptyState(screenWidth, screenHeight);
-                  }
+                    if (_controller.error.value.isNotEmpty) {
+                      return _buildErrorState(screenWidth, screenHeight);
+                    }
 
-                  return ListView.builder(
-                    controller: _scrollController,
-                    itemCount: _controller.jurnalList.length +
-                        (_controller.hasMore.value ? 1 : 0),
-                    padding:
-                        EdgeInsets.symmetric(horizontal: screenWidth * 0.04),
-                    itemBuilder: (context, index) {
-                      // Show loading indicator at the end if there's more data
-                      if (index >= _controller.jurnalList.length) {
-                        return Center(
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: _controller.isFetchingMore.value
-                                ? const CircularProgressIndicator()
-                                : const SizedBox(),
-                          ),
-                        );
-                      }
+                    if (_controller.jurnalList.isEmpty) {
+                      return _buildEmptyState(screenWidth, screenHeight);
+                    }
 
-                      final entry = _controller.jurnalList[index];
-                      return TweenAnimationBuilder<double>(
-                        duration: Duration(milliseconds: 300 + (index * 100)),
-                        tween: Tween(begin: 0.0, end: 1.0),
-                        builder: (context, value, child) {
-                          return Transform.translate(
-                            offset: Offset(0, (1 - value) * 50),
-                            child: Opacity(
-                              opacity: value,
-                              child: child,
+                    return ListView.builder(
+                      controller: _scrollController,
+                      itemCount: _controller.jurnalList.length +
+                          (_controller.hasMore.value ? 1 : 0),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: screenWidth * 0.04),
+                      itemBuilder: (context, index) {
+                        if (index >= _controller.jurnalList.length) {
+                          return Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: _controller.isFetchingMore.value
+                                  ? const CircularProgressIndicator()
+                                  : const SizedBox(),
                             ),
                           );
-                        },
-                        child: JurnalCard(
-                          tanggal: entry.tanggal,
-                          waktuMakan: entry.waktuMakan,
-                          status: entry.status ?? '-',
-                          statusColor:
-                              _hexToColor(entry.statusColor ?? '#000000'),
-                          jam: entry.jam ?? '-',
-                          kalori: (entry.totalKalori ?? 0).toStringAsFixed(0),
-                          karbo: (entry.totalKarbo ?? 0).toStringAsFixed(0),
-                          lemak: (entry.totalLemak ?? 0).toStringAsFixed(0),
-                          gula: entry.totalGula.toStringAsFixed(0),
-                          makananList: entry.makananList,
-                          onDelete: () => _controller.hapusJurnal(entry.id),
-                        ),
-                      );
-                    },
-                  );
-                }),
+                        }
+
+                        final entry = _controller.jurnalList[index];
+                        return TweenAnimationBuilder<double>(
+                          duration: Duration(milliseconds: 300 + (index * 100)),
+                          tween: Tween(begin: 0.0, end: 1.0),
+                          builder: (context, value, child) {
+                            return Transform.translate(
+                              offset: Offset(0, (1 - value) * 50),
+                              child: Opacity(
+                                opacity: value,
+                                child: child,
+                              ),
+                            );
+                          },
+                          child: JurnalCard(
+                            tanggal: entry.tanggal,
+                            waktuMakan: entry.waktuMakan,
+                            status: entry.status ?? '-',
+                            statusColor:
+                                _hexToColor(entry.statusColor ?? '#000000'),
+                            jam: entry.jam ?? '-',
+                            kalori: (entry.totalKalori ?? 0).toStringAsFixed(0),
+                            karbo: (entry.totalKarbo ?? 0).toStringAsFixed(0),
+                            lemak: (entry.totalLemak ?? 0).toStringAsFixed(0),
+                            gula: entry.totalGula.toStringAsFixed(0),
+                          ),
+                        );
+                      },
+                    );
+                  }),
+                ),
               ),
-            ),
-          ],
-        ),
+            ],
+          );
+        }),
       ),
     );
   }
@@ -559,8 +557,6 @@ class _JurnalPageState extends State<JurnalPage>
 class JurnalCard extends StatelessWidget {
   final String tanggal, waktuMakan, status, jam, kalori, karbo, lemak, gula;
   final Color statusColor;
-  final List<MakananItem> makananList;
-  final VoidCallback onDelete;
 
   const JurnalCard({
     required this.tanggal,
@@ -572,8 +568,6 @@ class JurnalCard extends StatelessWidget {
     required this.karbo,
     required this.lemak,
     required this.gula,
-    required this.makananList,
-    required this.onDelete,
     super.key,
   });
 
@@ -950,66 +944,6 @@ class JurnalCard extends StatelessWidget {
                           ),
                         ),
                         SizedBox(height: screenWidth * 0.03),
-                        if (makananList.isEmpty)
-                          Container(
-                            padding: EdgeInsets.all(screenWidth * 0.04),
-                            decoration: BoxDecoration(
-                              color: Colors.grey.shade50,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: const Center(
-                              child: Text('Tidak ada data makanan'),
-                            ),
-                          )
-                        else
-                          ...makananList.map((makanan) {
-                            return Container(
-                              margin: const EdgeInsets.only(bottom: 8),
-                              padding: EdgeInsets.all(screenWidth * 0.03),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: Colors.grey.shade200),
-                              ),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(8),
-                                    decoration: BoxDecoration(
-                                      color: Colors.orange.withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Icon(
-                                      Icons.restaurant,
-                                      color: Colors.orange,
-                                      size: screenWidth * 0.04,
-                                    ),
-                                  ),
-                                  SizedBox(width: screenWidth * 0.03),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          makanan.nama,
-                                          style: const TextStyle(
-                                              fontWeight: FontWeight.w600),
-                                        ),
-                                        Text(
-                                          '${makanan.jumlah} - ${(makanan.kalori * makanan.jumlahAngka).toStringAsFixed(1)} kkal',
-                                          style: TextStyle(
-                                            color: Colors.grey.shade600,
-                                            fontSize: screenWidth * 0.035,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          }).toList(),
                       ],
                     ),
                   ),
@@ -1041,24 +975,6 @@ class JurnalCard extends StatelessWidget {
                         ),
                       ),
                       SizedBox(width: screenWidth * 0.03),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                            _showDeleteConfirmation(context);
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red,
-                            foregroundColor: Colors.white,
-                            padding: EdgeInsets.symmetric(
-                                vertical: screenWidth * 0.035),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child: const Text('Hapus'),
-                        ),
-                      ),
                     ],
                   ),
                 ),
@@ -1085,44 +1001,6 @@ class JurnalCard extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-
-  void _showDeleteConfirmation(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text('Konfirmasi Hapus'),
-          content: const Text('Apakah Anda yakin ingin menghapus data ini?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Batal'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                onDelete();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: const Text('Data berhasil dihapus'),
-                    backgroundColor: Colors.red,
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                );
-              },
-              style: TextButton.styleFrom(foregroundColor: Colors.red),
-              child: const Text('Hapus'),
-            ),
-          ],
-        );
-      },
     );
   }
 }

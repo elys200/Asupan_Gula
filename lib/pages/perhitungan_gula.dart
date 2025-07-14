@@ -5,6 +5,7 @@ import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sweetsense/models/jurnal_entry.dart';
 import 'package:sweetsense/pages/jurnal.dart';
 import '../services/jurnal_service.dart';
 import 'package:sweetsense/api/openfood_api.dart';
@@ -376,16 +377,20 @@ class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
     log('📦 Kirim ke backend: tanggal=$tanggal, waktu_makan=$waktuMakan, total_gula=$totalGula, total_kalori=$totalKalori, total_karbo=$totalKarbo, total_lemak=$totalLemak, jam=$jamSekarang');
 
     try {
-      await _jurnalService!.tambahJurnalLengkap(
+      final entry = JurnalEntry(
+        id: 0,
         tanggal: tanggal,
         waktuMakan: waktuMakan,
         totalGula: totalGula,
+        kategori: null,
+        jam: jamSekarang,
         totalKalori: totalKalori,
         totalKarbo: totalKarbo,
         totalLemak: totalLemak,
-        jam: jamSekarang,
-        userId: _userId!,
+        status: null,
+        statusColor: null,
       );
+      await _jurnalService!.tambahJurnal(entry, _userId!);
 
       if (!mounted) return;
 
