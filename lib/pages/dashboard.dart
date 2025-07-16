@@ -34,46 +34,105 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _buildStatusBox(SugarStatus status, String label) {
     bool isSelected = _selectedStatus == status;
 
-    final Border border;
-    if (status == SugarStatus.low) {
-      const double boldWidth = 1.5;
-      border = Border.all(color: Colors.grey.shade400, width: boldWidth);
-    } else {
-      border = Border(
-        top: BorderSide(color: Colors.grey.shade400, width: 1.5),
-        bottom: BorderSide(color: Colors.grey.shade400, width: 1.5),
-        right: BorderSide(color: Colors.grey.shade400, width: 1.5),
-      );
+    Color getStatusColor() {
+      switch (status) {
+        case SugarStatus.low:
+          return const Color(0xFF4CAF50);
+        case SugarStatus.normal:
+          return const Color(0xFF2196F3);
+        case SugarStatus.high:
+          return const Color(0xFFF44336);
+        default:
+          return Colors.grey;
+      }
     }
 
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _selectedStatus = status;
-        });
-      },
-      child: Column(
-        children: [
-          Container(
-            height: 30,
-            width: 70,
-            decoration: BoxDecoration(
-              color: isSelected ? const Color(0xFFE65245) : Colors.grey[300],
-              border: border,
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            _selectedStatus = status;
+          });
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Sugar status set to: $label'),
+              duration: const Duration(seconds: 1),
+              backgroundColor: getStatusColor(),
             ),
+          );
+        },
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 4),
+          child: Column(
+            children: [
+              Container(
+                height: 45,
+                decoration: BoxDecoration(
+                  color: isSelected ? getStatusColor() : Colors.grey[200],
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isSelected ? getStatusColor() : Colors.grey.shade300,
+                    width: 2,
+                  ),
+                  boxShadow: isSelected
+                      ? [
+                          BoxShadow(
+                            color: getStatusColor().withOpacity(0.3),
+                            blurRadius: 6,
+                            offset: const Offset(0, 3),
+                          )
+                        ]
+                      : [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          )
+                        ],
+                ),
+                child: Center(
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      color: isSelected ? Colors.white : Colors.grey[700],
+                      fontWeight:
+                          isSelected ? FontWeight.bold : FontWeight.w600,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 6),
+              Container(
+                height: 3,
+                width: 24,
+                decoration: BoxDecoration(
+                  color: isSelected ? getStatusColor() : Colors.transparent,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 4),
-          Text(label),
-        ],
+        ),
       ),
     );
   }
 
   Widget _buildAvatarPlaceholder() {
-    return const CircleAvatar(
-      radius: 30,
-      backgroundColor: Colors.white,
-      child: Icon(Icons.person, size: 30, color: Colors.grey),
+    return Container(
+      width: 60,
+      height: 60,
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.2),
+        shape: BoxShape.circle,
+        border: Border.all(color: Colors.white.withOpacity(0.3), width: 2),
+      ),
+      child: const Icon(
+        Icons.person,
+        size: 28,
+        color: Colors.white,
+      ),
     );
   }
 
@@ -117,82 +176,150 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
+  void _navigateToJurnal() {
+    try {
+      print('Navigating to journal...');
+      Navigator.pushNamed(context, '/jurnal').then((result) {
+        print('Returned from journal: $result');
+      }).catchError((error) {
+        print('Navigation error: $error');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Route /jurnal not found: $error'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      });
+    } catch (e) {
+      print('Error during navigation: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final String formattedDate =
         DateFormat('EEEE\nd/M/y').format(DateTime.now());
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF8F9FA),
       body: Obx(() {
         final user = profileController.user.value;
 
         return SingleChildScrollView(
           child: Column(
             children: [
-              Stack(
-                clipBehavior: Clip.none,
-                alignment: Alignment.center,
+              Column(
                 children: [
-                  ClipPath(
-                    clipper: BottomCurveClipper(),
-                    child: Container(
-                      height: 200,
-                      decoration: const BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [Color(0xFFE43A15), Color(0xFFE65245)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    top: 60,
-                    left: 16,
-                    right: 16,
-                    child: Row(
+                  Container(
+                    height: 230,
+                    child: Stack(
                       children: [
-                        user?.foto != null && user!.foto!.isNotEmpty
-                            ? CircleAvatar(
-                                radius: 30,
-                                backgroundImage: NetworkImage(user.foto!),
-                              )
-                            : _buildAvatarPlaceholder(),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            'Hello,\n${user?.username ?? "User"}!',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
+                        ClipPath(
+                          clipper: SmoothBottomCurveClipper(),
+                          child: Container(
+                            height: 280,
+                            decoration: const BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [Color(0xFFE43A15), Color(0xFFE65245)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          top: 30,
+                          left: 20,
+                          right: 20,
+                          child: SafeArea(
+                            child: Row(
+                              children: [
+                                user?.foto != null && user!.foto!.isNotEmpty
+                                    ? Container(
+                                        width: 60,
+                                        height: 60,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          border: Border.all(
+                                            color:
+                                                Colors.white.withOpacity(0.3),
+                                            width: 3,
+                                          ),
+                                        ),
+                                        child: ClipOval(
+                                          child: Image.network(
+                                            user.foto!,
+                                            fit: BoxFit.cover,
+                                            errorBuilder:
+                                                (context, error, stackTrace) =>
+                                                    _buildAvatarPlaceholder(),
+                                          ),
+                                        ),
+                                      )
+                                    : _buildAvatarPlaceholder(),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        'Hello,',
+                                        style: TextStyle(
+                                          color: Colors.white70,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w400,
+                                        ),
+                                      ),
+                                      Text(
+                                        '${user?.username ?? "User"}!',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 24,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
                       ],
                     ),
                   ),
-                  Positioned(
-                    top: 150,
-                    left: 16,
-                    right: 16,
-                    child: Card(
-                      elevation: 8,
-                      shadowColor: Colors.black54,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Expanded(
-                                  child: Column(
+
+                  // Sugar status card - positioned with negative margin to overlap
+                  Transform.translate(
+                    offset: const Offset(0, -100),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Card(
+                        elevation: 12,
+                        shadowColor: Colors.black.withOpacity(0.15),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Column(
+                            children: [
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
@@ -200,105 +327,218 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                         'Today Sugar',
                                         style: TextStyle(
                                           fontWeight: FontWeight.bold,
-                                          fontSize: 18,
-                                          decoration: TextDecoration.underline,
+                                          fontSize: 20,
+                                          color: Color(0xFF2C3E50),
                                         ),
                                       ),
                                       SizedBox(height: 4),
-                                      Text('Status',
-                                          style: TextStyle(
-                                              fontSize: 16,
-                                              color: Colors.grey)),
+                                      Text(
+                                        'Status',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.grey,
+                                        ),
+                                      ),
                                     ],
                                   ),
-                                ),
-                                SizedBox(
-                                  child: Text(
-                                    formattedDate,
-                                    textAlign: TextAlign.center,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.grey,
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 6,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFE43A15)
+                                          .withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Text(
+                                      formattedDate,
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        color: Color(0xFFE43A15),
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 20),
+
+                              // Status selection buttons
+                              Row(
+                                children: [
+                                  _buildStatusBox(SugarStatus.low, 'Low'),
+                                  _buildStatusBox(SugarStatus.normal, 'Normal'),
+                                  _buildStatusBox(SugarStatus.high, 'High'),
+                                ],
+                              ),
+                              const SizedBox(height: 24),
+
+                              // Open Journal button
+                              GestureDetector(
+                                onTap: () {
+                                  print('Journal button pressed!');
+                                  _navigateToJurnal();
+                                },
+                                child: Container(
+                                  width: double.infinity,
+                                  height: 52,
+                                  decoration: BoxDecoration(
+                                    gradient: const LinearGradient(
+                                      colors: [
+                                        Color(0xFFE43A15),
+                                        Color(0xFFE65245)
+                                      ],
+                                      begin: Alignment.centerLeft,
+                                      end: Alignment.centerRight,
+                                    ),
+                                    borderRadius: BorderRadius.circular(16),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: const Color(0xFFE43A15)
+                                            .withOpacity(0.3),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ],
+                                  ),
+                                  child: const Center(
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.edit_note,
+                                          color: Colors.white,
+                                          size: 24,
+                                        ),
+                                        SizedBox(width: 12),
+                                        Text(
+                                          'Jurnal',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ),
-                              ],
-                            ),
-                            const SizedBox(height: 16),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              children: [
-                                _buildStatusBox(SugarStatus.low, 'Low'),
-                                _buildStatusBox(SugarStatus.normal, 'Normal'),
-                                _buildStatusBox(SugarStatus.high, 'High'),
-                              ],
-                            ),
-                            const SizedBox(height: 16),
-                            SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  Get.toNamed('/jurnal');
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFFF94F45),
-                                  foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 12),
-                                ),
-                                child: const Text(
-                                  'Jurnal',
-                                  style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold),
-                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 180),
+              const SizedBox(height: 0),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text(
                       "Food Recommendation",
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 20,
+                        color: Color(0xFF2C3E50),
+                      ),
                     ),
                     TextButton(
                       onPressed: () {
                         Navigator.pushNamed(context, '/food');
                       },
-                      child: const Text("See all"),
+                      style: TextButton.styleFrom(
+                        foregroundColor: const Color(0xFFE43A15),
+                      ),
+                      child: const Text(
+                        "See all",
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
                   ],
                 ),
               ),
+
+              const SizedBox(height: 16),
+
+              // Food Carousel
               if (isLoadingFoods)
-                const Center(child: CircularProgressIndicator())
+                const Padding(
+                  padding: EdgeInsets.all(40),
+                  child: CircularProgressIndicator(
+                    color: Color(0xFFE43A15),
+                  ),
+                )
               else if (foodLoadError != null)
                 Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Text(
-                    'Failed to load food recommendations.\n$foodLoadError',
-                    style: const TextStyle(color: Colors.red),
-                    textAlign: TextAlign.center,
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.red.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Column(
+                          children: [
+                            const Icon(
+                              Icons.error_outline,
+                              size: 48,
+                              color: Colors.red,
+                            ),
+                            const SizedBox(height: 12),
+                            const Text(
+                              'Failed to load food recommendations',
+                              style: TextStyle(
+                                color: Colors.red,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 8),
+                            ElevatedButton(
+                              onPressed: fetchFoods,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFFE43A15),
+                                foregroundColor: Colors.white,
+                              ),
+                              child: const Text('Retry'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 )
               else if (foods.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: Text('No food recommendations available'),
+                Padding(
+                  padding: const EdgeInsets.all(40),
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.restaurant_menu,
+                        size: 48,
+                        color: Colors.grey[400],
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'No food recommendations available',
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
                 )
               else
                 CarouselSlider.builder(
@@ -311,24 +551,49 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         '/food_detail',
                         arguments: food,
                       ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(20),
-                        child: food.fotoUrl != null && food.fotoUrl!.isNotEmpty
-                            ? Image.network(
-                                food.fotoUrl!,
-                                fit: BoxFit.cover,
-                                width: double.infinity,
-                                errorBuilder: (context, error, stackTrace) =>
-                                    Center(
-                                  child: Icon(Icons.broken_image,
-                                      size: 40, color: Colors.grey),
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 8),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(16),
+                          child: food.fotoUrl != null &&
+                                  food.fotoUrl!.isNotEmpty
+                              ? Image.network(
+                                  food.fotoUrl!,
+                                  fit: BoxFit.cover,
+                                  width: double.infinity,
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      Container(
+                                    color: Colors.grey[200],
+                                    child: const Center(
+                                      child: Icon(
+                                        Icons.broken_image,
+                                        size: 50,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                  ),
+                                )
+                              : Container(
+                                  color: Colors.grey[200],
+                                  child: const Center(
+                                    child: Icon(
+                                      Icons.restaurant_menu,
+                                      size: 50,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
                                 ),
-                              )
-                            : Image.asset(
-                                'assets/images/food_placeholder.png',
-                                fit: BoxFit.cover,
-                                width: double.infinity,
-                              ),
+                        ),
                       ),
                     );
                   },
@@ -336,6 +601,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     height: 200,
                     autoPlay: true,
                     enlargeCenterPage: true,
+                    viewportFraction: 0.8,
                     onPageChanged: (index, reason) {
                       setState(() {
                         currentIndex = index;
@@ -343,44 +609,109 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     },
                   ),
                 ),
-              const SizedBox(height: 20),
+
+              const SizedBox(height: 32),
+
+              // News Section
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text(
                       "News",
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 20,
+                        color: Color(0xFF2C3E50),
+                      ),
                     ),
                     TextButton(
                       onPressed: () {
                         Navigator.pushNamed(context, '/news');
                       },
-                      child: const Text("See all"),
+                      style: TextButton.styleFrom(
+                        foregroundColor: const Color(0xFFE43A15),
+                      ),
+                      child: const Text(
+                        "See all",
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
                   ],
                 ),
               ),
+
+              const SizedBox(height: 16),
+
+              // News Carousel
               if (isLoadingNews)
                 const Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: Center(child: CircularProgressIndicator()),
+                  padding: EdgeInsets.all(40),
+                  child: CircularProgressIndicator(
+                    color: Color(0xFFE43A15),
+                  ),
                 )
               else if (newsLoadError != null)
                 Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Text(
-                    'Failed to load news.\n$newsLoadError',
-                    style: const TextStyle(color: Colors.red),
-                    textAlign: TextAlign.center,
+                  padding: const EdgeInsets.all(20),
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      children: [
+                        const Icon(
+                          Icons.error_outline,
+                          size: 48,
+                          color: Colors.red,
+                        ),
+                        const SizedBox(height: 12),
+                        const Text(
+                          'Failed to load news',
+                          style: TextStyle(
+                            color: Colors.red,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 8),
+                        ElevatedButton(
+                          onPressed: fetchNews,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFE43A15),
+                            foregroundColor: Colors.white,
+                          ),
+                          child: const Text('Retry'),
+                        ),
+                      ],
+                    ),
                   ),
                 )
               else if (news.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: Text('No news available'),
+                Padding(
+                  padding: const EdgeInsets.all(40),
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.newspaper,
+                        size: 48,
+                        color: Colors.grey[400],
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'No news available',
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
                 )
               else
                 CarouselSlider.builder(
@@ -390,77 +721,107 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     return GestureDetector(
                       onTap: () =>
                           Get.toNamed('/news_detail', arguments: newsItem),
-                      child: Stack(
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(20),
-                            child: newsItem.fotoUrl != null &&
-                                    newsItem.fotoUrl!.isNotEmpty
-                                ? Image.network(
-                                    newsItem.fotoUrl!,
-                                    fit: BoxFit.cover,
-                                    width: double.infinity,
-                                    errorBuilder:
-                                        (context, error, stackTrace) =>
-                                            const Icon(
-                                      Icons.broken_image,
-                                      size: 40,
-                                      color: Colors.grey,
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 8),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(16),
+                          child: Stack(
+                            children: [
+                              newsItem.fotoUrl != null &&
+                                      newsItem.fotoUrl!.isNotEmpty
+                                  ? Image.network(
+                                      newsItem.fotoUrl!,
+                                      fit: BoxFit.cover,
+                                      width: double.infinity,
+                                      height: double.infinity,
+                                      errorBuilder:
+                                          (context, error, stackTrace) =>
+                                              Container(
+                                        color: Colors.grey[200],
+                                        child: const Center(
+                                          child: Icon(
+                                            Icons.broken_image,
+                                            size: 50,
+                                            color: Colors.grey,
+                                          ),
+                                        ),
+                                      ),
+                                    )
+                                  : Container(
+                                      color: Colors.grey[200],
+                                      child: const Center(
+                                        child: Icon(
+                                          Icons.newspaper,
+                                          size: 50,
+                                          color: Colors.grey,
+                                        ),
+                                      ),
                                     ),
-                                  )
-                                : Image.asset(
-                                    'assets/images/news_placeholder.png',
-                                    fit: BoxFit.cover,
-                                    width: double.infinity,
+                              Positioned(
+                                bottom: 0,
+                                left: 0,
+                                right: 0,
+                                child: Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [
+                                        Colors.transparent,
+                                        Colors.black.withOpacity(0.7),
+                                      ],
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                    ),
                                   ),
-                          ),
-                          Positioned(
-                            bottom: 0,
-                            left: 0,
-                            right: 0,
-                            child: Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: Colors.black.withOpacity(0.6),
-                                borderRadius: const BorderRadius.vertical(
-                                  bottom: Radius.circular(20),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        newsItem.judul,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14,
+                                        ),
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        DateFormat('dd MMM yyyy')
+                                            .format(newsItem.tanggalterbit),
+                                        style: const TextStyle(
+                                          color: Colors.white70,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    newsItem.judul,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 14,
-                                    ),
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    DateFormat('dd MMM yyyy')
-                                        .format(newsItem.tanggalterbit),
-                                    style: const TextStyle(
-                                      color: Colors.white70,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
+                            ],
                           ),
-                        ],
+                        ),
                       ),
                     );
                   },
                   options: CarouselOptions(
-                    height: 150,
+                    height: 160,
                     autoPlay: true,
                     enlargeCenterPage: true,
+                    viewportFraction: 0.8,
                     onPageChanged: (index, reason) {
                       setState(() {
                         currentIndex = index;
@@ -468,6 +829,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     },
                   ),
                 ),
+
               const SizedBox(height: 100),
             ],
           ),
@@ -477,14 +839,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 }
 
-class BottomCurveClipper extends CustomClipper<Path> {
+class SmoothBottomCurveClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
     Path path = Path();
-    path.lineTo(0, size.height - 60);
+    path.lineTo(0, size.height -82);
 
-    var controlPoint = Offset(size.width / 2, size.height);
-    var endPoint = Offset(size.width, size.height - 60);
+    var controlPoint = Offset(size.width / 2, size.height - 164);
+    var endPoint = Offset(size.width, size.height - 82);
 
     path.quadraticBezierTo(
       controlPoint.dx,

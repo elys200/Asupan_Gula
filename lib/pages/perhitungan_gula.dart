@@ -1,12 +1,16 @@
 import 'dart:async';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
+import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sweetsense/models/jurnal_entry.dart';
 import 'package:sweetsense/pages/jurnal.dart';
+import '../controllers/profile_controller.dart';
 import '../services/jurnal_service.dart';
 import 'package:sweetsense/api/openfood_api.dart';
 import 'package:sweetsense/api/usda_api.dart';
@@ -25,38 +29,9 @@ class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
   bool _isLoadingToken = true;
   int? _userId;
 
-  final List<Map<String, dynamic>> makananList = [
-    {
-      'nama': 'Telur Rebus',
-      'jumlah': '2 sedang',
-      'jumlahAngka': 2.0,
-      'kalori': 155.0,
-      'gula': 1.1,
-      'protein': 12.6,
-      'lemak': 10.6,
-      'karbohidrat': 1.1,
-    },
-    {
-      'nama': 'Salad Sayur',
-      'jumlah': '1 mangkok',
-      'jumlahAngka': 1.0,
-      'kalori': 80.0,
-      'gula': 3.5,
-      'protein': 2.0,
-      'lemak': 0.5,
-      'karbohidrat': 15.0,
-    },
-    {
-      'nama': 'Dada ayam',
-      'jumlah': '150 gram',
-      'jumlahAngka': 1.5,
-      'kalori': 165.0,
-      'gula': 0.0,
-      'protein': 31.0,
-      'lemak': 3.6,
-      'karbohidrat': 0.0,
-    },
-  ];
+  final profileController = Get.put(ProfileController());
+
+  final List<Map<String, dynamic>> makananList = [];
 
   final waktuMakanOptions = [
     'Snack',
@@ -102,6 +77,7 @@ class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
     }, (e, s) {
       logError('🚨 Zone error di halaman ini', e, s);
     });
+    profileController.fetchProfile();
   }
 
   Future<void> _initializeLocale() async {
@@ -294,6 +270,48 @@ class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
     );
   }
 
+  // Popup validasi untuk data makanan kosong
+  void _showEmptyDataDialog() {
+    log('⚠️ Popup validasi data kosong muncul');
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: Row(
+            children: const [
+              Icon(Icons.warning, color: Colors.orange, size: 28),
+              SizedBox(width: 10),
+              Text('Perhatian!'),
+            ],
+          ),
+          content: const Text(
+            'Anda belum menambahkan makanan apapun. Silakan tambahkan makanan terlebih dahulu untuk melakukan perhitungan.',
+            style: TextStyle(fontSize: 16),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Tutup'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _tambahMakanan(); // Langsung buka dialog tambah makanan
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.redAccent,
+              ),
+              child: const Text('Tambah Makanan'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   void _showPopupDialog() {
     log('📋 Konfirmasi simpan muncul');
     showDialog(
@@ -356,6 +374,22 @@ class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
         );
       },
     );
+  }
+
+  // Method untuk handle tombol hitung dengan validasi
+  void _handleHitungButton() {
+    log('🧮 Tombol hitung ditekan');
+    
+    // Validasi apakah makananList kosong
+    if (makananList.isEmpty) {
+      log('⚠️ Tidak ada data makanan, tampilkan popup validasi');
+      _showEmptyDataDialog();
+      return;
+    }
+    
+    // Jika ada data makanan, lanjutkan ke popup konfirmasi
+    log('✅ Ada data makanan, lanjut ke popup konfirmasi');
+    _showPopupDialog();
   }
 
   Future<void> _simpanDataJurnal() async {
@@ -451,6 +485,15 @@ class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
     });
   }
 
+  // Widget helper untuk avatar placeholder
+  Widget _buildAvatarPlaceholder({double radius = 20}) {
+    return CircleAvatar(
+      radius: radius,
+      backgroundColor: Colors.white,
+      child: Icon(Icons.person, size: radius, color: Colors.redAccent),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     log('📋 build dipanggil, _isLoadingToken=$_isLoadingToken');
@@ -463,19 +506,50 @@ class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
     return Scaffold(
       backgroundColor: Colors.redAccent,
       appBar: AppBar(
-        title: const Text('Perhitungan'),
-        backgroundColor: Colors.redAccent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
+        title: Text(
+          'Perhitungan Gula Darah',
+          style: GoogleFonts.poppins(
+            fontSize: 15,
+            fontWeight: FontWeight.w400,
+          ),
         ),
-        actions: const [
-          Padding(
-            padding: EdgeInsets.only(right: 10.0),
-            child: CircleAvatar(
-              backgroundImage: AssetImage('assets/images/portrait.png'),
+        backgroundColor: Color(0xFFE43A15),
+        elevation: 0,
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFFE43A15), Color(0xFFE65245)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
+          ),
+        ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 16.0),
+            child: Obx(() {
+              final user = profileController.user.value;
+              return user?.fotoUrl != null && user!.fotoUrl!.isNotEmpty
+                  ? CircleAvatar(
+                      radius: 20,
+                      child: ClipOval(
+                        child: CachedNetworkImage(
+                          imageUrl: user.fotoUrl!,
+                          width: 40,
+                          height: 40,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => const Center(
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.redAccent),
+                            ),
+                          ),
+                          errorWidget: (context, url, error) => _buildAvatarPlaceholder(radius: 20),
+                        ),
+                      ),
+                    )
+                  : _buildAvatarPlaceholder(radius: 20);
+            }),
           ),
         ],
       ),
@@ -489,13 +563,29 @@ class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
           children: [
             Row(
-              children: const [
-                CircleAvatar(
-                  backgroundColor: Colors.white,
-                  child: Icon(Icons.person, color: Colors.redAccent),
-                ),
-                SizedBox(width: 10),
-                Expanded(
+              children: [
+                Obx(() {
+                  final user = profileController.user.value;
+                  return user?.fotoUrl != null && user!.fotoUrl!.isNotEmpty
+                      ? CircleAvatar(
+                          radius: 20,
+                          child: ClipOval(
+                            child: CachedNetworkImage(
+                              imageUrl: user.fotoUrl!,
+                              width: 40,
+                              height: 40,
+                              fit: BoxFit.cover,
+                              placeholder: (context, url) => const Center(
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              ),
+                              errorWidget: (context, url, error) => _buildAvatarPlaceholder(),
+                            ),
+                          ),
+                        )
+                      : _buildAvatarPlaceholder();
+                }),
+                const SizedBox(width: 10),
+                const Expanded(
                   child: Text(
                     'Sudah cek Gula Darah Anda?',
                     style: TextStyle(color: Colors.black87, fontSize: 16),
@@ -603,7 +693,7 @@ class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
             const SizedBox(height: 30),
             Center(
               child: ElevatedButton(
-                onPressed: _showPopupDialog,
+                onPressed: _handleHitungButton, // Menggunakan method baru dengan validasi
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.redAccent,
                   padding:
@@ -621,7 +711,6 @@ class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
   }
 
   void log(String message) {
-    // ignore: avoid_print
     print(message);
   }
 

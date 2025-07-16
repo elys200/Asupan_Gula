@@ -19,8 +19,11 @@ class _JurnalPageState extends State<JurnalPage>
   late JurnalController _controller;
   late ScrollController _scrollController;
   late final ProfileController profileController;
-  String selectedFilter = "Weekly";
-
+  
+  // Replace filter with date search
+  TextEditingController _dateSearchController = TextEditingController();
+  DateTime? _selectedDate;
+  
   RxBool isReady = false.obs;
 
   @override
@@ -67,6 +70,7 @@ class _JurnalPageState extends State<JurnalPage>
   void dispose() {
     _scrollController.dispose();
     _animationController.dispose();
+    _dateSearchController.dispose();
     super.dispose();
   }
 
@@ -103,13 +107,76 @@ class _JurnalPageState extends State<JurnalPage>
   }
 
   String _getAverageCalories() {
-    if (_controller.jurnalList.isEmpty) return "0";
-    final totalCalories = _controller.jurnalList.fold<double>(
+    final filteredList = _getFilteredJurnalList();
+    if (filteredList.isEmpty) return "0";
+    final totalCalories = filteredList.fold<double>(
       0,
       (sum, entry) => sum + (entry.totalKalori ?? 0),
     );
-    final average = totalCalories / _controller.jurnalList.length;
+    final average = totalCalories / filteredList.length;
     return (average / 1000).toStringAsFixed(1);
+  }
+
+  // Method untuk mendapatkan jumlah entri berdasarkan filter tanggal
+  int _getFilteredCount() {
+    return _getFilteredJurnalList().length;
+  }
+
+  // Method untuk filter berdasarkan tanggal
+  void _filterByDate(DateTime? date) {
+    setState(() {
+      _selectedDate = date;
+    });
+    
+    if (date != null) {
+      _dateSearchController.text = "${date.day}/${date.month}/${date.year}";
+    } else {
+      _dateSearchController.clear();
+    }
+    
+    // Refresh data dari controller
+    _controller.fetchJurnal(refresh: true);
+  }
+
+  // Method untuk filter list jurnal berdasarkan tanggal yang dipilih
+  List<dynamic> _getFilteredJurnalList() {
+    if (_selectedDate == null) {
+      return _controller.jurnalList;
+    }
+    
+    final selectedDateStr = "${_selectedDate!.year}-${_selectedDate!.month.toString().padLeft(2, '0')}-${_selectedDate!.day.toString().padLeft(2, '0')}";
+    
+    return _controller.jurnalList.where((entry) {
+      final entryDate = entry.tanggal;
+      return entryDate == selectedDateStr;
+    }).toList();
+  }
+
+  // Method untuk membuka date picker
+  Future<void> _selectDate() async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate ?? DateTime.now(),
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now(),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: Color(0xFFE43A15),
+              onPrimary: Colors.white,
+              surface: Colors.white,
+              onSurface: Colors.black,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      _filterByDate(picked);
+    }
   }
 
   @override
@@ -165,7 +232,7 @@ class _JurnalPageState extends State<JurnalPage>
                       children: [
                         GestureDetector(
                           onTap: () => Navigator.of(context)
-                              .pushReplacementNamed('/dashboard'),
+                              .pushReplacementNamed('/perhitungan_gula'),
                           child: Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
@@ -212,58 +279,21 @@ class _JurnalPageState extends State<JurnalPage>
                             ],
                           ),
                         ),
-                        Row(
-                          children: [
-                            Obx(() => GestureDetector(
-                                  onTap: _controller.isLoading.value
-                                      ? null
-                                      : () => _controller.fetchJurnal(),
-                                  child: Container(
-                                    padding: const EdgeInsets.all(8),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(0.2),
-                                      borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(
-                                        color: Colors.white.withOpacity(0.3),
-                                        width: 1,
-                                      ),
-                                    ),
-                                    child: _controller.isLoading.value
-                                        ? SizedBox(
-                                            width: screenWidth * 0.05,
-                                            height: screenWidth * 0.05,
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 2,
-                                              valueColor:
-                                                  AlwaysStoppedAnimation<Color>(
-                                                      Colors.white),
-                                            ),
-                                          )
-                                        : Icon(
-                                            Icons.refresh,
-                                            color: Colors.white,
-                                            size: screenWidth * 0.05,
-                                          ),
-                                  ),
-                                )),
-                            SizedBox(width: screenWidth * 0.02),
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(
-                                  color: Colors.white.withOpacity(0.3),
-                                  width: 1,
-                                ),
-                              ),
-                              child: Icon(
-                                Icons.restaurant_menu,
-                                color: Colors.white,
-                                size: screenWidth * 0.06,
-                              ),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: Colors.white.withOpacity(0.3),
+                              width: 1,
                             ),
-                          ],
+                          ),
+                          child: Icon(
+                            Icons.restaurant_menu,
+                            color: Colors.white,
+                            size: screenWidth * 0.06,
+                          ),
                         ),
                       ],
                     ),
@@ -282,8 +312,8 @@ class _JurnalPageState extends State<JurnalPage>
                             mainAxisAlignment: MainAxisAlignment.spaceAround,
                             children: [
                               _buildQuickStat(
-                                  "Entries",
-                                  "${_controller.jurnalList.length}",
+                                  _selectedDate != null ? "Filtered" : "Entries",
+                                  "${_getFilteredCount()}",
                                   Icons.bookmark),
                               _buildQuickStat("This Week",
                                   "${_getWeeklyCount()}", Icons.calendar_today),
@@ -298,22 +328,82 @@ class _JurnalPageState extends State<JurnalPage>
                 ),
               ),
 
-              // Filter Buttons
+              // Date Search Section (Replace Filter Buttons)
               Padding(
                 padding: EdgeInsets.all(screenWidth * 0.04),
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      _buildFilterButton("Today", screenWidth),
-                      SizedBox(width: screenWidth * 0.03),
-                      _buildFilterButton("Weekly", screenWidth),
-                      SizedBox(width: screenWidth * 0.03),
-                      _buildFilterButton("Monthly", screenWidth),
-                      SizedBox(width: screenWidth * 0.03),
-                      _buildFilterButton("Yearly", screenWidth),
-                    ],
-                  ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _dateSearchController,
+                        readOnly: true,
+                        onTap: _selectDate,
+                        decoration: InputDecoration(
+                          hintText: "Pilih tanggal untuk filter",
+                          prefixIcon: const Icon(
+                            Icons.calendar_today,
+                            color: Color(0xFFE43A15),
+                          ),
+                          suffixIcon: _selectedDate != null
+                              ? IconButton(
+                                  icon: const Icon(Icons.clear),
+                                  onPressed: () => _filterByDate(null),
+                                )
+                              : null,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(
+                              color: Colors.grey.shade300,
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFE43A15),
+                              width: 2,
+                            ),
+                          ),
+                          filled: true,
+                          fillColor: Colors.white,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: screenWidth * 0.03),
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFE43A15), Color(0xFFE65245)],
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFE43A15).withOpacity(0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(12),
+                          onTap: _selectDate,
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Icon(
+                              Icons.search,
+                              color: Colors.white,
+                              size: screenWidth * 0.06,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
 
@@ -331,29 +421,20 @@ class _JurnalPageState extends State<JurnalPage>
                       return _buildErrorState(screenWidth, screenHeight);
                     }
 
-                    if (_controller.jurnalList.isEmpty) {
+                    // Get filtered list based on selected date
+                    final filteredList = _getFilteredJurnalList();
+
+                    if (filteredList.isEmpty) {
                       return _buildEmptyState(screenWidth, screenHeight);
                     }
 
                     return ListView.builder(
                       controller: _scrollController,
-                      itemCount: _controller.jurnalList.length +
-                          (_controller.hasMore.value ? 1 : 0),
+                      itemCount: filteredList.length,
                       padding:
                           EdgeInsets.symmetric(horizontal: screenWidth * 0.04),
                       itemBuilder: (context, index) {
-                        if (index >= _controller.jurnalList.length) {
-                          return Center(
-                            child: Padding(
-                              padding: const EdgeInsets.all(16.0),
-                              child: _controller.isFetchingMore.value
-                                  ? const CircularProgressIndicator()
-                                  : const SizedBox(),
-                            ),
-                          );
-                        }
-
-                        final entry = _controller.jurnalList[index];
+                        final entry = filteredList[index];
                         return TweenAnimationBuilder<double>(
                           duration: Duration(milliseconds: 300 + (index * 100)),
                           tween: Tween(begin: 0.0, end: 1.0),
@@ -460,60 +541,6 @@ class _JurnalPageState extends State<JurnalPage>
     );
   }
 
-  Widget _buildFilterButton(String label, double screenWidth) {
-    final isSelected = selectedFilter == label;
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          selectedFilter = label;
-        });
-        _filterJurnalData(label);
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: EdgeInsets.symmetric(
-          horizontal: screenWidth * 0.04,
-          vertical: screenWidth * 0.025,
-        ),
-        decoration: BoxDecoration(
-          gradient: isSelected
-              ? const LinearGradient(
-                  colors: [Color(0xFFE43A15), Color(0xFFE65245)],
-                )
-              : null,
-          color: isSelected ? null : Colors.white,
-          borderRadius: BorderRadius.circular(25),
-          boxShadow: [
-            BoxShadow(
-              color: isSelected
-                  ? const Color(0xFFE43A15).withOpacity(0.3)
-                  : Colors.black.withOpacity(0.05),
-              blurRadius: isSelected ? 8 : 4,
-              offset: const Offset(0, 2),
-            ),
-          ],
-          border: isSelected
-              ? null
-              : Border.all(color: Colors.grey.shade300, width: 1),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: isSelected ? Colors.white : Colors.grey.shade700,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-            fontSize: screenWidth * 0.035,
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _filterJurnalData(String filter) {
-    // You can implement filter logic here
-    // For now, just refresh the data
-    _controller.fetchJurnal();
-  }
-
   Widget _buildEmptyState(double screenWidth, double screenHeight) {
     return Center(
       child: Column(
@@ -533,7 +560,9 @@ class _JurnalPageState extends State<JurnalPage>
           ),
           SizedBox(height: screenHeight * 0.03),
           Text(
-            "Belum ada data jurnal",
+            _selectedDate != null 
+                ? "Tidak ada data pada tanggal ini"
+                : "Belum ada data jurnal",
             style: TextStyle(
               fontSize: screenWidth * 0.05,
               fontWeight: FontWeight.w600,
@@ -542,18 +571,20 @@ class _JurnalPageState extends State<JurnalPage>
           ),
           SizedBox(height: screenHeight * 0.01),
           Text(
-            "Mulai catat makananmu hari ini!",
+            _selectedDate != null 
+                ? "Coba pilih tanggal lain atau hapus filter"
+                : "Mulai catat makananmu hari ini!",
             style: TextStyle(
               fontSize: screenWidth * 0.035,
               color: Colors.grey.shade500,
             ),
+            textAlign: TextAlign.center,
           ),
         ],
       ),
     );
   }
 }
-
 class JurnalCard extends StatelessWidget {
   final String tanggal, waktuMakan, status, jam, kalori, karbo, lemak, gula;
   final Color statusColor;
