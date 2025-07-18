@@ -19,11 +19,11 @@ class _JurnalPageState extends State<JurnalPage>
   late JurnalController _controller;
   late ScrollController _scrollController;
   late final ProfileController profileController;
-  
+
   // Replace filter with date search
   TextEditingController _dateSearchController = TextEditingController();
   DateTime? _selectedDate;
-  
+
   RxBool isReady = false.obs;
 
   @override
@@ -127,13 +127,13 @@ class _JurnalPageState extends State<JurnalPage>
     setState(() {
       _selectedDate = date;
     });
-    
+
     if (date != null) {
       _dateSearchController.text = "${date.day}/${date.month}/${date.year}";
     } else {
       _dateSearchController.clear();
     }
-    
+
     // Refresh data dari controller
     _controller.fetchJurnal(refresh: true);
   }
@@ -143,9 +143,10 @@ class _JurnalPageState extends State<JurnalPage>
     if (_selectedDate == null) {
       return _controller.jurnalList;
     }
-    
-    final selectedDateStr = "${_selectedDate!.year}-${_selectedDate!.month.toString().padLeft(2, '0')}-${_selectedDate!.day.toString().padLeft(2, '0')}";
-    
+
+    final selectedDateStr =
+        "${_selectedDate!.year}-${_selectedDate!.month.toString().padLeft(2, '0')}-${_selectedDate!.day.toString().padLeft(2, '0')}";
+
     return _controller.jurnalList.where((entry) {
       final entryDate = entry.tanggal;
       return entryDate == selectedDateStr;
@@ -312,7 +313,9 @@ class _JurnalPageState extends State<JurnalPage>
                             mainAxisAlignment: MainAxisAlignment.spaceAround,
                             children: [
                               _buildQuickStat(
-                                  _selectedDate != null ? "Filtered" : "Entries",
+                                  _selectedDate != null
+                                      ? "Filtered"
+                                      : "Entries",
                                   "${_getFilteredCount()}",
                                   Icons.bookmark),
                               _buildQuickStat("This Week",
@@ -560,7 +563,7 @@ class _JurnalPageState extends State<JurnalPage>
           ),
           SizedBox(height: screenHeight * 0.03),
           Text(
-            _selectedDate != null 
+            _selectedDate != null
                 ? "Tidak ada data pada tanggal ini"
                 : "Belum ada data jurnal",
             style: TextStyle(
@@ -571,7 +574,7 @@ class _JurnalPageState extends State<JurnalPage>
           ),
           SizedBox(height: screenHeight * 0.01),
           Text(
-            _selectedDate != null 
+            _selectedDate != null
                 ? "Coba pilih tanggal lain atau hapus filter"
                 : "Mulai catat makananmu hari ini!",
             style: TextStyle(
@@ -585,6 +588,7 @@ class _JurnalPageState extends State<JurnalPage>
     );
   }
 }
+
 class JurnalCard extends StatelessWidget {
   final String tanggal, waktuMakan, status, jam, kalori, karbo, lemak, gula;
   final Color statusColor;
@@ -966,15 +970,6 @@ class JurnalCard extends StatelessWidget {
                             ],
                           ),
                         ),
-                        SizedBox(height: screenWidth * 0.05),
-                        Text(
-                          'Daftar Makanan',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: screenWidth * 0.04,
-                          ),
-                        ),
-                        SizedBox(height: screenWidth * 0.03),
                       ],
                     ),
                   ),

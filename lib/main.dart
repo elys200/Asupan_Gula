@@ -21,7 +21,6 @@ import 'package:sweetsense/pages/change_password.dart';
 import 'package:sweetsense/pages/favorite_recipe.dart';
 import 'package:sweetsense/pages/food.dart';
 import 'package:sweetsense/pages/news.dart';
-import 'package:sweetsense/pages/hitung.dart';
 import 'package:sweetsense/pages/food_detail.dart';
 import 'package:sweetsense/pages/news_detail.dart';
 import 'package:sweetsense/pages/jurnal.dart';
@@ -108,7 +107,6 @@ class SweetSense extends StatelessWidget {
         GetPage(name: '/favorite_recipe', page: () => const FavoriteRecipe()),
         GetPage(name: '/food', page: () => const FoodPage()),
         GetPage(name: '/news', page: () => const NewsPage()),
-        GetPage(name: '/hitung', page: () => const HitungPage()),
         GetPage(name: '/jurnal', page: () => const JurnalPage()),
 
         //  Detail Pages

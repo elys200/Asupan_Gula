@@ -1,29 +1,31 @@
 import 'dart:io';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:dio/dio.dart' as dioLib;
 import 'package:http_parser/http_parser.dart';
 import 'package:flutter/foundation.dart' show Uint8List, kIsWeb;
+import 'package:quickalert/quickalert.dart';
+import 'package:mime/mime.dart';
+
 import '../models/user_model.dart';
 import '../constants/constants.dart';
 import 'authentication.dart';
-import 'package:mime/mime.dart';
 
 class ProfileController extends GetxController {
-  final AuthenticationController _auth = Get.find<AuthenticationController>();
+  final AuthenticationController _auth = Get.find();
+  final dio = dioLib.Dio(dioLib.BaseOptions(
+    baseUrl: url,
+    headers: {'Accept': 'application/json'},
+  ));
+
   final user = Rxn<UserModel>();
   final isLoading = false.obs;
-  final imageFile = Rxn<File>();
-  final isChangingPassword = false.obs;
   final isUpdatingProfile = false.obs;
+  final isChangingPassword = false.obs;
+  final imageFile = Rxn<File>();
 
-  final dio = dioLib.Dio(
-    dioLib.BaseOptions(
-      baseUrl: url,
-      headers: {'Accept': 'application/json'},
-    ),
-  );
+  // --- PROFILE FETCHING ---
 
-  /// Mengambil data profil user
   Future<void> fetchProfile() async {
     final token = _auth.token.value;
     if (token == null) {
@@ -35,9 +37,7 @@ class ProfileController extends GetxController {
     try {
       final res = await dio.get(
         'user/profile',
-        options: dioLib.Options(
-          headers: {'Authorization': 'Bearer $token'},
-        ),
+        options: dioLib.Options(headers: {'Authorization': 'Bearer $token'}),
       );
 
       if (res.statusCode == 200) {
@@ -52,7 +52,8 @@ class ProfileController extends GetxController {
     }
   }
 
-  // Menyimpan file gambar lokal
+  // --- PROFILE IMAGE HANDLING ---
+
   Future<void> setProfileImage(File file) async {
     imageFile.value = file;
     if (kIsWeb) {
@@ -66,48 +67,6 @@ class ProfileController extends GetxController {
     }
   }
 
-  // Update data profil user
-  Future<bool> updateProfile({
-    String? username,
-    String? email,
-    String? jenisKelamin,
-    int? umur,
-    double? beratBadan,
-    File? imageFile,
-  }) async {
-    final token = _auth.token.value;
-    if (token == null) {
-      return false;
-    }
-
-    isUpdatingProfile.value = true;
-
-    try {
-      final formData = dioLib.FormData.fromMap({
-        '_method': 'PUT',
-        if (username != null) 'username': username,
-        if (email != null) 'email': email,
-        if (jenisKelamin != null) 'jenis_kelamin': jenisKelamin,
-        if (umur != null) 'umur': umur.toString(),
-        if (beratBadan != null) 'berat_badan': beratBadan.toString(),
-      });
-
-      final res = await dio.put(
-        'user/profile',
-        data: formData,
-        options: dioLib.Options(headers: {'Authorization': 'Bearer $token'}),
-      );
-
-      user.value = UserModel.fromJson(res.data['user']);
-      return true;
-    } catch (e) {
-      return false;
-    } finally {
-      isUpdatingProfile.value = false;
-    }
-  }
-
-  // Update foto profil user
   Future<void> updateProfilePhoto({
     File? fotoFile,
     Uint8List? fotoBytes,
@@ -115,38 +74,23 @@ class ProfileController extends GetxController {
   }) async {
     final token = _auth.token.value;
     if (token == null) {
-      Get.snackbar('Error', 'Silakan login terlebih dahulu.');
+      _showLoginError();
       return;
     }
 
     try {
-      dioLib.MultipartFile? multipartFile;
+      final multipartFile = await _createMultipartFile(
+        fotoFile: fotoFile,
+        fotoBytes: fotoBytes,
+        filename: filename,
+      );
 
-      if (fotoFile != null) {
-        final mimeType = lookupMimeType(fotoFile.path) ?? 'image/jpeg';
-        final mimeSplit = mimeType.split('/');
-
-        multipartFile = await dioLib.MultipartFile.fromFile(
-          fotoFile.path,
-          filename: fotoFile.path.split('/').last,
-          contentType: MediaType(mimeSplit[0], mimeSplit[1]),
-        );
-      } else if (fotoBytes != null && filename != null) {
-        final mimeType = lookupMimeType(filename) ?? 'image/jpeg';
-        final mimeSplit = mimeType.split('/');
-
-        multipartFile = dioLib.MultipartFile.fromBytes(
-          fotoBytes,
-          filename: filename,
-          contentType: MediaType(mimeSplit[0], mimeSplit[1]),
-        );
-      } else {
-        Get.snackbar('Error', 'File foto tidak valid.');
+      if (multipartFile == null) {
+        _showInvalidPhotoError();
         return;
       }
 
       final formData = dioLib.FormData.fromMap({'foto': multipartFile});
-
       final res = await dio.post(
         'user/profile/foto',
         data: formData,
@@ -156,20 +100,53 @@ class ProfileController extends GetxController {
       if (res.statusCode == 200 || res.statusCode == 201) {
         user.value = UserModel.fromJson(res.data['user']);
         imageFile.value = null;
-        Get.snackbar('Berhasil', 'Foto profil berhasil diperbarui');
+
+        QuickAlert.show(
+          context: Get.context!,
+          type: QuickAlertType.success,
+          title: 'Berhasil',
+          text: 'Foto profil berhasil diperbarui',
+          confirmBtnText: 'OK',
+          confirmBtnColor: Colors.green,
+        );
       } else {
-        Get.snackbar('Error', 'Gagal memperbarui foto.');
+        _showPhotoUpdateError();
       }
     } catch (e) {
-      Get.snackbar('Error', 'Gagal memperbarui foto.\n${e.toString()}');
+      _showPhotoUpdateError(message: e.toString());
     }
   }
 
-  //Hapus Foto
+  Future<dioLib.MultipartFile?> _createMultipartFile({
+    File? fotoFile,
+    Uint8List? fotoBytes,
+    String? filename,
+  }) async {
+    try {
+      if (fotoFile != null) {
+        final mime =
+            lookupMimeType(fotoFile.path)?.split('/') ?? ['image', 'jpeg'];
+        return await dioLib.MultipartFile.fromFile(
+          fotoFile.path,
+          filename: fotoFile.path.split('/').last,
+          contentType: MediaType(mime[0], mime[1]),
+        );
+      } else if (fotoBytes != null && filename != null) {
+        final mime = lookupMimeType(filename)?.split('/') ?? ['image', 'jpeg'];
+        return dioLib.MultipartFile.fromBytes(
+          fotoBytes,
+          filename: filename,
+          contentType: MediaType(mime[0], mime[1]),
+        );
+      }
+    } catch (_) {}
+    return null;
+  }
+
   Future<void> removeProfileImage() async {
     final token = _auth.token.value;
     if (token == null) {
-      Get.snackbar('Error', 'Silakan login terlebih dahulu.');
+      _showLoginError();
       return;
     }
 
@@ -182,16 +159,91 @@ class ProfileController extends GetxController {
       if (res.statusCode == 200) {
         user.value = user.value?.copyWith(foto: null);
         imageFile.value = null;
-        Get.snackbar('Berhasil', 'Foto profil berhasil dihapus');
+
+        QuickAlert.show(
+          context: Get.context!,
+          type: QuickAlertType.success,
+          title: 'Berhasil',
+          text: 'Foto profil berhasil dihapus',
+          confirmBtnText: 'OK',
+          confirmBtnColor: Colors.green,
+        );
       } else {
-        Get.snackbar('Error', 'Gagal menghapus foto profil.');
+        _showPhotoDeleteError();
       }
     } catch (e) {
-      Get.snackbar('Error', 'Gagal menghapus foto profil.\n$e');
+      _showPhotoDeleteError(message: e.toString());
     }
   }
 
-  // Mengganti kata sandi user
+  // --- PROFILE DATA UPDATE ---
+
+  Future<bool> updateProfile({
+    String? username,
+    String? email,
+    String? jenisKelamin,
+    int? umur,
+    double? beratBadan,
+  }) async {
+    final token = _auth.token.value;
+    if (token == null) {
+      debugPrint('❌ Token null, user belum login?');
+      return false;
+    }
+
+    isUpdatingProfile.value = true;
+
+    try {
+      debugPrint('🔧 Memulai updateProfile...');
+      debugPrint('Data yang akan dikirim:');
+      debugPrint('username: $username');
+      debugPrint('email: $email');
+      debugPrint('jenisKelamin: $jenisKelamin');
+      debugPrint('umur: $umur');
+      debugPrint('beratBadan: $beratBadan');
+
+      final formData = dioLib.FormData.fromMap({
+        '_method': 'PUT',
+        if (username != null) 'username': username,
+        if (email != null) 'email': email,
+        if (jenisKelamin != null) 'jenis_kelamin': jenisKelamin,
+        if (umur != null) 'umur': umur.toString(),
+        if (beratBadan != null) 'berat_badan': beratBadan.toString(),
+      });
+
+      final res = await dio.post(
+        'user/profile',
+        data: formData,
+        options: dioLib.Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Accept': 'application/json',
+          },
+        ),
+      );
+
+      debugPrint('✅ Response diterima: ${res.statusCode}');
+      debugPrint('📦 Data response: ${res.data}');
+
+      // Simpan data user baru
+      user.value = UserModel.fromJson(res.data['user']);
+      return true;
+    } catch (e) {
+      debugPrint('❌ Terjadi error saat updateProfile: $e');
+
+      if (e is dioLib.DioError) {
+        debugPrint('📄 Status code: ${e.response?.statusCode}');
+        debugPrint('📡 Response error: ${e.response?.data}');
+      }
+
+      return false;
+    } finally {
+      isUpdatingProfile.value = false;
+    }
+  }
+
+  // --- PASSWORD CHANGE ---
+
   Future<Map<String, dynamic>> changePassword(
     String current,
     String newPassword,
@@ -220,24 +272,15 @@ class ProfileController extends GetxController {
           'success': true,
           'message': response.data['message'] ?? 'Kata sandi berhasil diubah.'
         };
-      } else {
-        return {'success': false, 'message': 'Gagal mengubah kata sandi.'};
       }
+      return {'success': false, 'message': 'Gagal mengubah kata sandi.'};
     } on dioLib.DioError catch (e) {
-      if (e.response != null) {
-        final data = e.response?.data;
-
-        if (data != null && data['errors'] != null) {
-          final errors = data['errors'] as Map<String, dynamic>;
-          final firstError = errors.values.first;
-          final message =
-              firstError is List ? firstError.first : firstError.toString();
-          return {'success': false, 'message': message};
-        } else if (data != null && data['message'] != null) {
-          return {'success': false, 'message': data['message']};
-        }
-      }
-      return {'success': false, 'message': 'Tidak dapat menghubungi server.'};
+      final data = e.response?.data;
+      final errors = data?['errors'] ?? {};
+      final firstError = errors.values.first;
+      final message =
+          firstError is List ? firstError.first : firstError.toString();
+      return {'success': false, 'message': message ?? data?['message']};
     } catch (e) {
       return {'success': false, 'message': 'Kesalahan tak terduga: $e'};
     } finally {
@@ -245,5 +288,48 @@ class ProfileController extends GetxController {
     }
   }
 
+  // --- UTILITIES ---
+
   void refreshProfile() {}
+
+  void _showLoginError() {
+    QuickAlert.show(
+      context: Get.context!,
+      type: QuickAlertType.error,
+      title: 'Error',
+      text: 'Silakan login terlebih dahulu.',
+      confirmBtnText: 'OK',
+    );
+  }
+
+  void _showInvalidPhotoError() {
+    QuickAlert.show(
+      context: Get.context!,
+      type: QuickAlertType.error,
+      title: 'Error',
+      text: 'File foto tidak valid.',
+      confirmBtnText: 'OK',
+    );
+  }
+
+  void _showPhotoUpdateError({String? message}) {
+    QuickAlert.show(
+      context: Get.context!,
+      type: QuickAlertType.error,
+      title: 'Error',
+      text: message ?? 'Gagal memperbarui foto.',
+      confirmBtnText: 'OK',
+    );
+  }
+
+  void _showPhotoDeleteError({String? message}) {
+    QuickAlert.show(
+      context: Get.context!,
+      type: QuickAlertType.error,
+      title: 'Error',
+      text: message ?? 'Gagal menghapus foto profil.',
+      confirmBtnText: 'OK',
+      confirmBtnColor: Colors.red,
+    );
+  }
 }
