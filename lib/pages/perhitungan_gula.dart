@@ -379,14 +379,14 @@ class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
   // Method untuk handle tombol hitung dengan validasi
   void _handleHitungButton() {
     log('🧮 Tombol hitung ditekan');
-    
+
     // Validasi apakah makananList kosong
     if (makananList.isEmpty) {
       log('⚠️ Tidak ada data makanan, tampilkan popup validasi');
       _showEmptyDataDialog();
       return;
     }
-    
+
     // Jika ada data makanan, lanjutkan ke popup konfirmasi
     log('✅ Ada data makanan, lanjut ke popup konfirmasi');
     _showPopupDialog();
@@ -541,10 +541,12 @@ class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
                           placeholder: (context, url) => const Center(
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.redAccent),
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.redAccent),
                             ),
                           ),
-                          errorWidget: (context, url, error) => _buildAvatarPlaceholder(radius: 20),
+                          errorWidget: (context, url, error) =>
+                              _buildAvatarPlaceholder(radius: 20),
                         ),
                       ),
                     )
@@ -576,9 +578,11 @@ class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
                               height: 40,
                               fit: BoxFit.cover,
                               placeholder: (context, url) => const Center(
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2),
                               ),
-                              errorWidget: (context, url, error) => _buildAvatarPlaceholder(),
+                              errorWidget: (context, url, error) =>
+                                  _buildAvatarPlaceholder(),
                             ),
                           ),
                         )
@@ -693,9 +697,11 @@ class _PerhitunganGulaPageState extends State<PerhitunganGulaPage> {
             const SizedBox(height: 30),
             Center(
               child: ElevatedButton(
-                onPressed: _handleHitungButton, // Menggunakan method baru dengan validasi
+                onPressed:
+                    _handleHitungButton, // Menggunakan method baru dengan validasi
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.redAccent,
+                  foregroundColor: Colors.white, // <-- TAMBAHKAN BARIS INI
                   padding:
                       const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
                   shape: RoundedRectangleBorder(

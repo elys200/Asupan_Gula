@@ -214,7 +214,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               Column(
                 children: [
                   SizedBox(
-                    height: 230,
+                    height: 280,
                     child: Stack(
                       children: [
                         ClipPath(
