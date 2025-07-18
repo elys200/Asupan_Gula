@@ -329,6 +329,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
     final String birthStr = _birthController.text.trim();
     final String weightStr = _weightController.text.trim();
 
+    // Validasi awal
     if (name.contains(' ') || email.contains(' ')) {
       QuickAlert.show(
         context: context,
@@ -385,26 +386,47 @@ class _EditProfilePageState extends State<EditProfilePage> {
       return;
     }
 
+    final current = profileController.user.value;
+    if (current != null &&
+        name == current.username &&
+        email == current.email &&
+        umur == current.umur &&
+        berat == current.beratBadan &&
+        _genderValue == current.jenisKelamin &&
+        _imageFile == null) {
+      QuickAlert.show(
+        context: context,
+        type: QuickAlertType.info,
+        title: 'Tidak Ada Perubahan',
+        text: 'Silakan ubah data terlebih dahulu.',
+        confirmBtnText: 'OK',
+        confirmBtnColor: Colors.blue,
+      );
+      return;
+    }
+
     profileController.isUpdatingProfile.value = true;
 
-    try {
-      await profileController.updateProfile(
-        username: name,
-        email: email,
-        jenisKelamin: _genderValue,
-        umur: umur,
-        beratBadan: berat,
-        imageFile: _imageFile,
-      );
+    final success = await profileController.updateProfile(
+      username: name,
+      email: email,
+      jenisKelamin: _genderValue,
+      umur: umur,
+      beratBadan: berat,
+    );
 
-      if (!mounted) return;
+    if (!mounted) return;
 
+    if (success) {
+      setState(() {
+        _hasChanged = false;
+      });
       QuickAlert.show(
         context: context,
         type: QuickAlertType.success,
         text: 'Perubahan berhasil disimpan!',
         confirmBtnText: 'OK',
-        confirmBtnColor: const Color(0xFFFF4A4A),
+        confirmBtnColor: Colors.green,
         confirmBtnTextStyle: GoogleFonts.poppins(
           fontSize: 16,
           fontWeight: FontWeight.w600,
@@ -413,20 +435,18 @@ class _EditProfilePageState extends State<EditProfilePage> {
         borderRadius: 20,
         onConfirmBtnTap: () {
           Navigator.of(context).pop();
-          Navigator.of(context).pop();
         },
       );
-    } catch (e) {
+    } else {
       QuickAlert.show(
         context: context,
         type: QuickAlertType.error,
         title: 'Gagal',
-        text: e.toString().replaceFirst('Exception: ', ''),
+        text: 'Gagal menyimpan perubahan. Coba lagi nanti.',
         confirmBtnText: 'OK',
-        confirmBtnColor: const Color(0xFFFF4A4A),
+        confirmBtnColor: Colors.red,
       );
-    } finally {
-      profileController.isUpdatingProfile.value = false;
     }
+    profileController.isUpdatingProfile.value = false;
   }
 }

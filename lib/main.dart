@@ -106,7 +106,7 @@ class SweetSense extends StatelessWidget {
             name: '/change_password', page: () => const ChangePasswordPage()),
         GetPage(name: '/favorite_recipe', page: () => const FavoriteRecipe()),
         GetPage(name: '/food', page: () => const FoodPage()),
-        GetPage(name: '/news', page: () => const NewsPage()), 
+        GetPage(name: '/news', page: () => const NewsPage()),
         GetPage(name: '/jurnal', page: () => const JurnalPage()),
 
         //  Detail Pages
