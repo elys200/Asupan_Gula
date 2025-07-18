@@ -2,11 +2,14 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:get/get.dart';
+import 'package:sweetsense/controllers/authentication.dart'; // <-- 1. TAMBAHKAN IMPORT INI
+import 'package:sweetsense/controllers/jurnal_controller.dart';
 import 'package:sweetsense/controllers/profile_controller.dart';
 import 'package:sweetsense/models/food_model.dart';
 import 'package:sweetsense/controllers/food_controller.dart';
 import 'package:sweetsense/models/news_model.dart';
 import 'package:sweetsense/controllers/news_controller.dart';
+import 'package:sweetsense/services/jurnal_service.dart';
 
 enum SugarStatus { none, low, normal, high }
 
@@ -18,7 +21,14 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
+  // --- 2. MODIFIKASI INISIALISASI CONTROLLER ---
+  // Ambil token dari AuthController
+  final AuthenticationController authController = Get.find<AuthenticationController>();
+
+  // Inisialisasi controller lain dengan dependency yang dibutuhkan
+  late final JurnalController jurnalController;
   final ProfileController profileController = Get.find<ProfileController>();
+  // --- Akhir Modifikasi ---
 
   List<FoodModel> foods = [];
   bool isLoadingFoods = true;
@@ -29,39 +39,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String? newsLoadError;
 
   int currentIndex = 0;
-  SugarStatus _selectedStatus = SugarStatus.none;
 
-  Widget _buildStatusBox(SugarStatus status, String label) {
-    bool isSelected = _selectedStatus == status;
-
-    Color getStatusColor() {
-      switch (status) {
-        case SugarStatus.low:
-          return const Color(0xFF4CAF50);
-        case SugarStatus.normal:
-          return const Color(0xFF2196F3);
-        case SugarStatus.high:
-          return const Color(0xFFF44336);
-        default:
-          return Colors.grey;
-      }
+  // Helper method untuk mendapatkan warna status
+  Color getStatusColor(SugarStatus status) {
+    switch (status) {
+      case SugarStatus.low:
+        return const Color(0xFF4CAF50);
+      case SugarStatus.normal:
+        return const Color(0xFF2196F3);
+      case SugarStatus.high:
+        return const Color(0xFFF44336);
+      default:
+        return Colors.grey;
     }
+  }
+
+  // Widget untuk status box
+  Widget _buildStatusBox(SugarStatus status, String label,
+      SugarStatus selectedStatusFromController) {
+    bool isSelected = status == selectedStatusFromController;
+    final color = getStatusColor(status);
 
     return Expanded(
       child: GestureDetector(
-        onTap: () {
-          setState(() {
-            _selectedStatus = status;
-          });
-
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Sugar status set to: $label'),
-              duration: const Duration(seconds: 1),
-              backgroundColor: getStatusColor(),
-            ),
-          );
-        },
+        onTap: () {},
         child: Container(
           margin: const EdgeInsets.symmetric(horizontal: 4),
           child: Column(
@@ -69,16 +70,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
               Container(
                 height: 45,
                 decoration: BoxDecoration(
-                  color: isSelected ? getStatusColor() : Colors.grey[200],
+                  color: isSelected ? color : Colors.grey[200],
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: isSelected ? getStatusColor() : Colors.grey.shade300,
+                    color: isSelected ? color : Colors.grey.shade300,
                     width: 2,
                   ),
                   boxShadow: isSelected
                       ? [
                           BoxShadow(
-                            color: getStatusColor().withOpacity(0.3),
+                            color: color.withOpacity(0.3),
                             blurRadius: 6,
                             offset: const Offset(0, 3),
                           )
@@ -108,7 +109,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 height: 3,
                 width: 24,
                 decoration: BoxDecoration(
-                  color: isSelected ? getStatusColor() : Colors.transparent,
+                  color: isSelected ? color : Colors.transparent,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -139,7 +140,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void initState() {
     super.initState();
+
+    // --- 3. PINDAHKAN INISIALISASI JURNAL CONTROLLER KE SINI ---
+    // Pastikan token diambil sebelum JurnalApiService dibuat
+    final token = authController.token.value ?? '';
+    jurnalController =
+        Get.put(JurnalController(JurnalApiService(token: token)));
+    // --- Akhir Perubahan ---
+
     profileController.fetchProfile();
+    jurnalController.fetchJurnal(refresh: true);
     fetchFoods();
     fetchNews();
   }
@@ -147,58 +157,45 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Future<void> fetchFoods() async {
     try {
       final fetchedFoods = await FoodController.getTop3Foods();
-      setState(() {
-        foods = fetchedFoods;
-        isLoadingFoods = false;
-        foodLoadError = null;
-      });
+      if (mounted) {
+        setState(() {
+          foods = fetchedFoods;
+          isLoadingFoods = false;
+          foodLoadError = null;
+        });
+      }
     } catch (e) {
-      setState(() {
-        foodLoadError = e.toString();
-        isLoadingFoods = false;
-      });
+      if (mounted) {
+        setState(() {
+          foodLoadError = e.toString();
+          isLoadingFoods = false;
+        });
+      }
     }
   }
 
   Future<void> fetchNews() async {
     try {
       final fetchedNews = await NewsController.getAllNews();
-      setState(() {
-        news = fetchedNews.take(3).toList();
-        isLoadingNews = false;
-        newsLoadError = null;
-      });
+      if (mounted) {
+        setState(() {
+          news = fetchedNews.take(3).toList();
+          isLoadingNews = false;
+          newsLoadError = null;
+        });
+      }
     } catch (e) {
-      setState(() {
-        newsLoadError = e.toString();
-        isLoadingNews = false;
-      });
+      if (mounted) {
+        setState(() {
+          newsLoadError = e.toString();
+          isLoadingNews = false;
+        });
+      }
     }
   }
 
   void _navigateToJurnal() {
-    try {
-      print('Navigating to journal...');
-      Navigator.pushNamed(context, '/jurnal').then((result) {
-        print('Returned from journal: $result');
-      }).catchError((error) {
-        print('Navigation error: $error');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Route /jurnal not found: $error'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      });
-    } catch (e) {
-      print('Error during navigation: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
+    Navigator.pushNamed(context, '/jurnal');
   }
 
   @override
@@ -216,7 +213,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             children: [
               Column(
                 children: [
-                  Container(
+                  SizedBox(
                     height: 230,
                     child: Stack(
                       children: [
@@ -296,7 +293,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   ),
 
-                  // Sugar status card - positioned with negative margin to overlap
+                  // Kartu status gula
                   Transform.translate(
                     offset: const Offset(0, -100),
                     child: Padding(
@@ -364,23 +361,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 ],
                               ),
                               const SizedBox(height: 20),
-
-                              // Status selection buttons
+                              Text(
+                                '${jurnalController.totalGulaHariIni.value.toStringAsFixed(1)} gram',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 32,
+                                  color: Color(0xFF2C3E50),
+                                ),
+                              ),
+                              const SizedBox(height: 16),
                               Row(
                                 children: [
-                                  _buildStatusBox(SugarStatus.low, 'Low'),
-                                  _buildStatusBox(SugarStatus.normal, 'Normal'),
-                                  _buildStatusBox(SugarStatus.high, 'High'),
+                                  _buildStatusBox(SugarStatus.low, 'Low',
+                                      jurnalController.statusGulaHariIni.value),
+                                  _buildStatusBox(SugarStatus.normal, 'Normal',
+                                      jurnalController.statusGulaHariIni.value),
+                                  _buildStatusBox(SugarStatus.high, 'High',
+                                      jurnalController.statusGulaHariIni.value),
                                 ],
                               ),
                               const SizedBox(height: 24),
-
-                              // Open Journal button
                               GestureDetector(
-                                onTap: () {
-                                  print('Journal button pressed!');
-                                  _navigateToJurnal();
-                                },
+                                onTap: _navigateToJurnal,
                                 child: Container(
                                   width: double.infinity,
                                   height: 52,
@@ -436,6 +438,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ],
               ),
               const SizedBox(height: 0),
+              // Sisa UI tidak berubah...
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Row(
@@ -843,7 +846,7 @@ class SmoothBottomCurveClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
     Path path = Path();
-    path.lineTo(0, size.height -82);
+    path.lineTo(0, size.height - 82);
 
     var controlPoint = Offset(size.width / 2, size.height - 164);
     var endPoint = Offset(size.width, size.height - 82);

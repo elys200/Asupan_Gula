@@ -1,6 +1,8 @@
+import 'package:get/get.dart';
 import '../models/jurnal_entry.dart';
 import '../services/jurnal_service.dart';
-import 'package:get/get.dart';
+// TAMBAHAN: Pastikan path ini benar untuk mengimpor enum SugarStatus
+import 'package:sweetsense/pages/dashboard.dart';
 
 // Controller untuk mengelola data jurnal makan
 class JurnalController extends GetxController {
@@ -24,7 +26,50 @@ class JurnalController extends GetxController {
   // Total seluruh jurnal
   final RxInt totalEntries = 0.obs;
 
+  // --- TAMBAHAN: State untuk Dashboard ---
+  final RxDouble totalGulaHariIni = 0.0.obs;
+  final Rx<SugarStatus> statusGulaHariIni = SugarStatus.none.obs;
+  // --- Akhir Tambahan ---
+
   JurnalController(this.apiService);
+
+  // --- TAMBAHAN: Fungsi baru untuk kalkulasi ---
+  void _hitungDanSetStatusGulaHarian() {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    // Filter jurnal hanya untuk hari ini
+    // Asumsi: model JurnalEntry Anda punya 'DateTime tanggal'
+    final jurnalHariIni = jurnalList.where((entry) {
+  // 1. Ubah String tanggal dari API menjadi objek DateTime
+  final parsedDate = DateTime.parse(entry.tanggal); 
+  // 2. Hilangkan informasi jam, menit, detik untuk perbandingan
+  final entryDate = DateTime(parsedDate.year, parsedDate.month, parsedDate.day);
+  return entryDate.isAtSameMomentAs(today);
+}).toList();
+
+    // Hitung total gula dari jurnal hari ini
+    // Asumsi: model JurnalEntry Anda punya 'double? gula'
+    double totalGula = jurnalHariIni.fold(0.0, (sum, entry) => sum + (entry.totalGula));
+
+    // Update state total gula
+    totalGulaHariIni.value = totalGula;
+
+    // Tentukan status berdasarkan batasan (silakan sesuaikan batasan ini)
+    if (jurnalHariIni.isEmpty) {
+      statusGulaHariIni.value = SugarStatus.none;
+    } else if (totalGula <= 25) {
+      // Contoh: di bawah 25g = Low
+      statusGulaHariIni.value = SugarStatus.low;
+    } else if (totalGula <= 50) {
+      // Contoh: 25g - 50g = Normal
+      statusGulaHariIni.value = SugarStatus.normal;
+    } else {
+      // Contoh: di atas 50g = High
+      statusGulaHariIni.value = SugarStatus.high;
+    }
+  }
+  // --- Akhir Tambahan ---
 
   // Set user ID & token untuk API
   void setUserId(int id) => userId = id;
@@ -65,6 +110,9 @@ class JurnalController extends GetxController {
       hasMore.value = currentPage < result.lastPage;
 
       if (hasMore.value) currentPage++;
+
+      // MODIFIKASI: Panggil fungsi kalkulasi setelah data didapat
+      _hitungDanSetStatusGulaHarian();
     } catch (e) {
       error.value = e.toString();
     } finally {
@@ -91,6 +139,9 @@ class JurnalController extends GetxController {
       hasMore.value = currentPage < result.lastPage;
 
       if (hasMore.value) currentPage++;
+
+      // MODIFIKASI: Panggil fungsi kalkulasi setelah data didapat
+      _hitungDanSetStatusGulaHarian();
     } catch (e) {
       error.value = e.toString();
     } finally {
@@ -110,6 +161,7 @@ class JurnalController extends GetxController {
 
     try {
       await apiService.tambahJurnal(entry, userId!);
+      // Memanggil fetchJurnal akan otomatis memanggil kalkulasi juga
       await fetchJurnal(refresh: true);
     } catch (e) {
       error.value = e.toString();
@@ -128,5 +180,10 @@ class JurnalController extends GetxController {
     currentPage = 1;
     totalEntries.value = 0;
     userId = null;
+
+    // --- TAMBAHAN: Reset state baru ---
+    totalGulaHariIni.value = 0.0;
+    statusGulaHariIni.value = SugarStatus.none;
+    // --- Akhir Tambahan ---
   }
 }
